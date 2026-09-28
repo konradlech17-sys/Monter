@@ -19,3 +19,4 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(kotlin("test-junit"))
 }
+group = "pl.monter"

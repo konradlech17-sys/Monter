@@ -89,8 +89,10 @@ fun GameScreen(
     onExit: () -> Unit,
     onNext: (Level?) -> Unit,
     onRetry: () -> Unit,
+    /** Gotowy stan – do podglądów i testów zrzutów ekranu. */
+    initial: GameState? = null,
 ) {
-    val st = remember(level.id, difficulty) { GameState(level, difficulty) }
+    val st = remember(level.id, difficulty) { initial ?: GameState(level, difficulty) }
     when (st.phase) {
         Phase.INTRO -> IntroScreen(level, difficulty, onBack = onExit) {
             st.phase = if (level.safetyProcedure) Phase.SAFETY else Phase.BUILD
