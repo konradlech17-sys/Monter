@@ -46,7 +46,7 @@ import pl.monter.core.game.SaveData
 import pl.monter.core.level.Level
 import pl.monter.core.level.Levels
 
-private val chapterColors = listOf(Color(0xFF26A69A), Color(0xFF42A5F5), Color(0xFFAB47BC))
+private val chapterColors = listOf(Color(0xFF26A69A), Color(0xFF42A5F5), Color(0xFFFFA726), Color(0xFFAB47BC), Color(0xFFEF5350), Color(0xFF8D6E63))
 
 @Composable
 fun LevelMapScreen(
@@ -72,7 +72,9 @@ fun LevelMapScreen(
             items(Levels.chapters) { ch ->
                 val color = chapterColors[(ch.number - 1) % chapterColors.size]
                 Column {
-                    Text("Rozdział ${ch.number}: ${ch.title}", color = color, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    val levels = Levels.inChapter(ch.number)
+                    val done = levels.count { save.completed(it) }
+                    Text("${ch.icon} Rozdział ${ch.number}: ${ch.title}   $done/${levels.size}", color = color, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     Text(ch.description, color = Palette.TextDim, fontSize = 12.sp)
                     Spacer(Modifier.height(8.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -81,7 +83,9 @@ fun LevelMapScreen(
                                 when {
                                     save.isUnlocked(level) -> onLevel(level)
                                     level.unlockCost != null -> buying = level
-                                    else -> info = "Najpierw ukończ poprzednie zadanie."
+                                    level.requires != null -> info = "Ten serwis odblokujesz po ukończeniu poziomu ${level.requires}: ${Levels.byId(level.requires!!)?.title}."
+                                    Levels.inChapter(level.chapter).firstOrNull() == level -> info = "Ukończ co najmniej ${Levels.CHAPTER_GATE} poziomy z rozdziału ${level.chapter - 1}, aby otworzyć ten rozdział."
+                                    else -> info = "Najpierw ukończ poprzednie zadanie w tym rozdziale."
                                 }
                             }
                         }
@@ -130,7 +134,7 @@ private fun LevelCard(level: Level, save: SaveData, difficulty: Difficulty, colo
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(30.dp).clip(RoundedCornerShape(50)).background(Palette.Bg.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
-                    Text(level.id, color = Palette.Text, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(if (level.story != null) "🛠️" else level.id, color = Palette.Text, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.width(8.dp))
                 Text(level.title, color = Palette.Text, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)

@@ -100,15 +100,15 @@ fun HomeScreen(
 }
 
 private fun rank(s: SaveData): Int = when {
-    Levels.all.filter { it.chapter == 3 }.all { s.completed(it) } -> 3
-    Levels.all.filter { it.chapter == 2 && it.unlockCost == null }.all { s.completed(it) } -> 2
+    Levels.campaign.filter { it.chapter == 5 }.all { s.completed(it) } -> 3
+    Levels.campaign.filter { it.chapter == 3 }.all { s.completed(it) } -> 2
     Levels.all.any { s.completed(it) } -> 1
     else -> 0
 }
 
 private fun rankName(s: SaveData) = when (rank(s)) {
     3 -> "Mistrz rozdzielnic"
-    2 -> "Instalator"
+    2 -> "Instalator-automatyk"
     1 -> "Uczeń elektryka"
     else -> "Nowicjusz"
 }

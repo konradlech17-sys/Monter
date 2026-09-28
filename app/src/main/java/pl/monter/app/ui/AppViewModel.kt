@@ -136,6 +136,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setHelmet(id: String) = update(_save.value.copy(activeHelmet = id, updatedAt = System.currentTimeMillis()))
 
+    fun markIntroSeen(levelId: String) {
+        val s = _save.value
+        if (levelId !in s.seenIntro) update(s.copy(seenIntro = s.seenIntro + levelId))
+    }
+
+    fun setView3d(on: Boolean) = update(_save.value.copy(view3d = on))
+
+    fun setHaptics(on: Boolean) = update(_save.value.copy(haptics = on))
+
     fun recordShort() {
         val s = _save.value
         val next = s.copy(stats = s.stats.copy(shortsCaused = s.stats.shortsCaused + 1))

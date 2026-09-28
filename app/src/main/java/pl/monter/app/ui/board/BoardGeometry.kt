@@ -51,20 +51,23 @@ fun Level.terminalDown(t: TermRef): Boolean {
 
 fun Part.rect() = Rect(x, y, x + kind.w, y + kind.h)
 
-/** Punkty kontrolne krzywej Béziera przewodu – przewód „zwisa" jak prawdziwy. */
-fun Level.wireControls(w: Wire): Array<Offset> {
-    val a = terminalPos(w.a); val b = terminalPos(w.b)
+/** Punkty kontrolne krzywej Béziera – przewód „zwisa" jak prawdziwy. [sagScale] pozwala animować sprężynowanie. */
+fun curveControls(a: Offset, aDown: Boolean, b: Offset, bDown: Boolean, sagScale: Float = 1f): Array<Offset> {
     val d = hypot(b.x - a.x, b.y - a.y)
-    val sag = 26f + d * 0.22f
-    val c1 = a + Offset(0f, if (terminalDown(w.a)) sag else -sag)
-    val c2 = b + Offset(0f, if (terminalDown(w.b)) sag else -sag)
+    val sag = (26f + d * 0.22f) * sagScale
+    val c1 = a + Offset(0f, if (aDown) sag else -sag)
+    val c2 = b + Offset(0f, if (bDown) sag else -sag)
     return arrayOf(a, c1, c2, b)
 }
 
-fun Level.wirePath(w: Wire): Path {
-    val (a, c1, c2, b) = wireControls(w)
-    return Path().apply { moveTo(a.x, a.y); cubicTo(c1.x, c1.y, c2.x, c2.y, b.x, b.y) }
+fun Level.wireControls(w: Wire, sagScale: Float = 1f): Array<Offset> =
+    curveControls(terminalPos(w.a), terminalDown(w.a), terminalPos(w.b), terminalDown(w.b), sagScale)
+
+fun curvePath(c: Array<Offset>): Path = Path().apply {
+    moveTo(c[0].x, c[0].y); cubicTo(c[1].x, c[1].y, c[2].x, c[2].y, c[3].x, c[3].y)
 }
+
+fun Level.wirePath(w: Wire, sagScale: Float = 1f): Path = curvePath(wireControls(w, sagScale))
 
 private fun bezier(p: Array<Offset>, t: Float): Offset {
     val u = 1 - t

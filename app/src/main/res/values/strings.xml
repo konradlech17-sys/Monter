@@ -19,6 +19,9 @@
     <string name="pgs_ach_chapter1" translatable="false"></string>
     <string name="pgs_ach_chapter2" translatable="false"></string>
     <string name="pgs_ach_chapter3" translatable="false"></string>
+    <string name="pgs_ach_chapter4" translatable="false"></string>
+    <string name="pgs_ach_chapter5" translatable="false"></string>
+    <string name="pgs_ach_chapter6" translatable="false"></string>
     <string name="pgs_ach_master" translatable="false"></string>
     <string name="pgs_ach_collector" translatable="false"></string>
     <string name="pgs_ach_rich" translatable="false"></string>

@@ -6,14 +6,23 @@ i sprawdza go według zasad z polskich norm (PN-HD 60364, PN-EN 60445, PN-EN 501
 
 ## Co jest w grze
 
+**38 poziomów w 6 rozdziałach:**
+
 | Rozdział | Poziomy |
 |---|---|
-| 1. Pierwsze kroki | wymiana żarówki (dobór trzonka i mocy), wymiana gniazdka, lampa z łącznikiem, gniazda przelotowe |
-| 2. Instalacje w domu | łącznik świecznikowy, schodowy, krzyżowy, dzwonek z transformatorem SELV, czujnik ruchu (bonus za punkty) |
-| 3. Rozdzielnice | rozdzielnica mieszkaniowa, dobór zabezpieczeń, gniazdo siłowe 400 V, rozdzielnica domowa 400 V z SPD |
+| 1. Pierwsze kroki | żarówka, gniazdko, lampa z łącznikiem, gniazda przelotowe, 3 gniazda z puszki (WAGO), 2 lampy na 1 łączniku, pokój: światło + gniazdo |
+| 2. Łączniki | świecznikowy, schodowy, krzyżowy, 2 krzyżowe (4 miejsca), łazienka z wentylatorem, klatka schodowa z 2 lampami, przedpokój |
+| 3. Sygnalizacja i automatyka | dzwonek SELV, dzwonek z 2 przycisków, czujnik ruchu, czujnik z wymuszeniem, czujnik zmierzchowy (bonus) |
+| 4. Rozdzielnice 230 V | mieszkaniowa, dobór zabezpieczeń, dwa RCD, kuchenka, ochrona przepięciowa, dom 5 obwodów (bonus) |
+| 5. Trójfaza 400 V | gniazdo CEE, silnik pompy (kierunek obrotów!), płyta indukcyjna, rozdzielnica domowa, warsztat |
+| 6. Serwis – znajdź usterkę | 8 zgłoszeń klientów: „kopie przy wymianie żarówki", „ciepłe gniazdko", „RCD wybija", „pompa nie tłoczy wody"… |
 
 - **3 poziomy trudności**: Uczeń (podpowiedzi ról zacisków, auto-kolor), Czeladnik, Mistrz (dobre praktyki obowiązkowe).
-- **Procedura BHP** przed pracą – „5 zasad bezpieczeństwa" z fałszywymi kartami.
+- **Procedura BHP** przed pracą – „5 zasad bezpieczeństwa" z fałszywymi kartami; po 3 bezbłędnych razach skrócona do animowanej checklisty. Teoria tylko przy pierwszym podejściu (potem pod 📘).
+- **Wygodny montaż**: przeciąganie przewodu palcem z „przyciąganiem" do zacisku, automatyczny kolor i przekrój (Uczeń/Czeladnik),
+  podświetlanie właściwych zacisków (Uczeń), podpowiedź „następny przewód", przytrzymanie = usunięcie, cofanie, zoom, wibracje.
+- **Widok 2.5D**: plansza w perspektywie, cienie przewodów, bryłowate aparaty, animacje wkładania przewodu, elektronów,
+  obracającego się silnika i wentylatora, wstrząs przy zwarciu.
 - **Tryb TEST** – przełączasz łączniki, widzisz przepływ prądu, świecące żarówki, dzwoniący dzwonek,
   a przy zwarciu iskry i zadziałanie właściwego zabezpieczenia (MCB, RCD, wkładka).
 - **Gratyfikacja**: gwiazdki, iskry ⚡ (waluta), 13 osiągnięć, sklep (podpowiedzi, miernik, wskaźnik napięcia,
