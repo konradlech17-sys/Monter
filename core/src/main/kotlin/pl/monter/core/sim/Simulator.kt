@@ -216,7 +216,7 @@ class Simulator(
 
     /** Odbiorniki, przez które płynie prąd (do analizy wyłączników RCD). */
     private fun currentPaths(p: Part): Pair<List<String>, List<String>>? = when (p.kind) {
-        Kind.LAMP, Kind.SOCKET, Kind.CIRCUIT_1P, Kind.MOTION_SENSOR, Kind.TRANSFORMER -> listOf("L", "N") to listOf("L", "N")
+        Kind.LAMP, Kind.FAN, Kind.SOCKET, Kind.CIRCUIT_1P, Kind.MOTION_SENSOR, Kind.TRANSFORMER -> listOf("L", "N") to listOf("L", "N")
         Kind.SOCKET_400, Kind.CIRCUIT_3P -> listOf("L1", "L2", "L3", "N") to listOf("L1", "L2", "L3", "N")
         else -> null
     }
@@ -276,6 +276,17 @@ class Simulator(
         fun pots(id: String) = s.pots(TermRef(p.id, id))
         return when (p.kind) {
             Kind.LAMP, Kind.SOCKET, Kind.CIRCUIT_1P -> singlePhase(pots("L"), pots("N"), pots("PE"))
+            // Wentylator ma II klasę ochronności (podwójna izolacja) – nie ma zacisku PE.
+            Kind.FAN -> singlePhase(pots("L"), pots("N"), setOf(Potential.PE))
+            Kind.MOTOR -> {
+                // Silnik trójfazowy nie potrzebuje przewodu N – obciąża fazy symetrycznie.
+                val st = threePhase(listOf(pots("L1"), pots("L2"), pots("L3")), setOf(Potential.N), pots("PE"))
+                st
+            }
+            Kind.SPD_2P -> {
+                val l = pots("L"); val n = pots("N"); val pe = pots("PE")
+                if (l.any { it.isPhase } && Potential.N in n && Potential.PE in pe) LoadStatus(LoadState.ON) else LoadStatus(LoadState.OFF)
+            }
             Kind.SOCKET_400, Kind.CIRCUIT_3P -> threePhase(listOf(pots("L1"), pots("L2"), pots("L3")), pots("N"), pots("PE"))
             Kind.SPD_4P -> {
                 val tp = threePhase(listOf(pots("L1"), pots("L2"), pots("L3")), pots("N"), pots("PE"))

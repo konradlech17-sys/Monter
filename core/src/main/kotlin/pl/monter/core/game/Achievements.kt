@@ -17,8 +17,11 @@ object Achievements {
         Achievement("safety10", "Bezpieczeństwo przede wszystkim", "10 razy bezbłędnie wykonaj procedurę bezpieczeństwa.", "🦺"),
         Achievement("chapter1", "Absolwent", "Ukończ rozdział 1.", "🎓"),
         Achievement("chapter2", "Instalator", "Ukończ rozdział 2.", "🔧"),
-        Achievement("chapter3", "Rozdzielnicowy", "Ukończ rozdział 3.", "🗄️"),
-        Achievement("master", "Mistrz rozdzielnic", "Ukończ rozdzielnicę 400 V na poziomie Mistrz.", "👑"),
+        Achievement("chapter3", "Automatyk", "Ukończ rozdział 3.", "🔔"),
+        Achievement("chapter4", "Rozdzielnicowy", "Ukończ rozdział 4.", "🗄️"),
+        Achievement("chapter5", "Siłowiec", "Ukończ rozdział 5.", "⚙️"),
+        Achievement("chapter6", "Serwisant", "Napraw wszystkie usterki z rozdziału 6.", "🛠️"),
+        Achievement("master", "Mistrz rozdzielnic", "Ukończ rozdzielnicę domową 400 V na poziomie Mistrz.", "👑"),
         Achievement("collector", "Kolekcjoner", "Dokonaj 3 zakupów w sklepie.", "🛒"),
         Achievement("rich", "Iskrowy milioner", "Zdobądź łącznie 5000 iskier.", "💰"),
         Achievement("perfectionist", "Perfekcjonista", "Zdobądź 3 gwiazdki na każdym poziomie kampanii.", "⭐"),
@@ -36,8 +39,8 @@ object Achievements {
         if (Levels.byId("2-3")?.let { save.completed(it) } == true) earned += "xor"
         if (save.stats.shortsCaused > 0) earned += "sparks"
         if (save.stats.perfectProcedures >= 10) earned += "safety10"
-        for (ch in 1..3) if (chapterDone(save, ch)) earned += "chapter$ch"
-        if (Levels.byId("3-4")?.let { save.result(it, Difficulty.HARD) } != null) earned += "master"
+        for (ch in 1..6) if (chapterDone(save, ch)) earned += "chapter$ch"
+        if (Levels.byId("5-4")?.let { save.result(it, Difficulty.HARD) } != null) earned += "master"
         if (save.stats.purchases >= 3) earned += "collector"
         if (save.totalEarned >= 5000) earned += "rich"
         if (Levels.campaign.all { save.bestStars(it) == 3 }) earned += "perfectionist"

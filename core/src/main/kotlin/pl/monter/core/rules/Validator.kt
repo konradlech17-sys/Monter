@@ -41,7 +41,8 @@ data class Report(val issues: List<Issue>, val scenariosChecked: Int) {
  */
 class Validator(private val level: Level, wires: List<Wire>, private val choices: Map<String, String>, private val difficulty: Difficulty) {
 
-    private val allWires = level.prewired + wires.filter { w -> level.prewired.none { it.id == w.id } }
+    /** Pełna lista przewodów na planszy (fabryczne + gracza). */
+    private val allWires = wires
     private val sim = Simulator(level.parts, allWires, choices)
     private val issues = mutableListOf<Issue>()
 
@@ -261,7 +262,7 @@ class Validator(private val level: Level, wires: List<Wire>, private val choices
             if (st.state != LoadState.ON) continue
             if (Note.LIVE_ENCLOSURE in st.notes) error("load.live", "${p.label}: obudowa pod napięciem!", "Faza dotarła do zacisku ochronnego PE. Dotknięcie obudowy grozi porażeniem.", parts = setOf(id))
             if (Note.VIA_PE in st.notes) error("load.viape", "${p.label}: prąd wraca przewodem PE", "Przewód ochronny nie może być przewodem roboczym. Podłącz zacisk N do przewodu neutralnego.", parts = setOf(id))
-            if (Note.NO_PE in st.notes && p.kind != Kind.SPD_4P) error(
+            if (Note.NO_PE in st.notes && !p.kind.isSpd) error(
                 "load.nope", "${p.label}: brak przewodu ochronnego PE",
                 "Odbiorniki I klasy ochronności (metalowa obudowa, gniazda ze stykiem ochronnym) muszą mieć podłączony PE. To on odprowadza prąd przy uszkodzeniu izolacji, a zabezpieczenie wyłącza zasilanie.",
                 parts = setOf(id),
@@ -275,7 +276,11 @@ class Validator(private val level: Level, wires: List<Wire>, private val choices
                 }
                 practice("load.polarity", "${p.label}: zamienione L i N", detail, parts = setOf(id))
             }
-            if (Note.PHASE_ORDER in st.notes) practice(
+            if (Note.PHASE_ORDER in st.notes && p.kind == Kind.MOTOR) error(
+                "load.rotation", "${p.label} kręci się w złą stronę!",
+                "Zamiana dwóch dowolnych faz odwraca kierunek wirowania pola magnetycznego, a więc i silnika. Pompa nie tłoczy wody, wentylator ssie zamiast wydmuchiwać. Podłącz L1→U1, L2→V1, L3→W1.",
+                parts = setOf(id),
+            ) else if (Note.PHASE_ORDER in st.notes) practice(
                 "load.rotation", "${p.label}: odwrócona kolejność faz${describe(c)}",
                 "Kolejność L1-L2-L3 wyznacza kierunek wirowania silnika. Zamiana dwóch faz sprawi, że np. piła lub pompa będzie kręcić się w złą stronę.",
                 parts = setOf(id),
@@ -344,7 +349,7 @@ class Validator(private val level: Level, wires: List<Wire>, private val choices
     // ------------------------------------------------------------------ zabezpieczenia
 
     private fun phaseTerms(p: Part): List<String> = when (p.kind) {
-        Kind.CIRCUIT_3P, Kind.SOCKET_400, Kind.SPD_4P -> listOf("L1", "L2", "L3")
+        Kind.CIRCUIT_3P, Kind.SOCKET_400, Kind.SPD_4P, Kind.MOTOR -> listOf("L1", "L2", "L3")
         else -> listOf("L")
     }
 
@@ -357,7 +362,7 @@ class Validator(private val level: Level, wires: List<Wire>, private val choices
             val s = sim.solve(c, open = setOf(dev.id))
             return phaseTerms(load).any { t -> r.potentials(TermRef(load.id, t)).any { it.isPhase } && s.pots(TermRef(load.id, t)).none { it.isPhase } }
         }
-        val loads = level.parts.filter { it.kind == Kind.CIRCUIT_1P || it.kind == Kind.CIRCUIT_3P || it.kind == Kind.SOCKET_400 || it.kind == Kind.SPD_4P || (it.circuit != null) }
+        val loads = level.parts.filter { it.kind == Kind.CIRCUIT_1P || it.kind == Kind.CIRCUIT_3P || it.kind == Kind.SOCKET_400 || it.kind.isSpd || (it.circuit != null) }
         for (load in loads) {
             if (r.loads[load.id]?.on != true) continue
             for (m in mains) if (!protects(m, load)) error(
@@ -365,7 +370,7 @@ class Validator(private val level: Level, wires: List<Wire>, private val choices
                 "Rozłącznik główny musi odłączać całą instalację – inaczej wyłączenie go nie zapewni bezpieczeństwa podczas prac.",
                 parts = setOf(load.id),
             )
-            if (load.kind == Kind.SPD_4P) {
+            if (load.kind.isSpd) {
                 val behindRcd = rcds.filter { protects(it, load) }
                 if (behindRcd.isNotEmpty()) error(
                     "prot.spd", "Ogranicznik przepięć za wyłącznikiem RCD",

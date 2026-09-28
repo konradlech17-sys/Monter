@@ -43,6 +43,14 @@ class ProgressTest {
         assertTrue(done.isUnlocked(Levels.campaign[1]))
         val bonus = Levels.all.first { it.unlockCost != null }
         assertFalse(done.isUnlocked(bonus))
+        // Rozdział 2 otwiera się po 3 poziomach rozdziału 1.
+        val ch2 = Levels.inChapter(2).first()
+        assertFalse(done.isUnlocked(ch2))
+        val three = s.copy(results = Levels.inChapter(1).take(3).associate { SaveData.key(it.id, Difficulty.EASY) to LevelResult(1) })
+        assertTrue(three.isUnlocked(ch2))
+        // Poziom serwisowy otwiera się po ukończeniu poziomu bazowego.
+        assertTrue(three.isUnlocked(Levels.byId("6-1")!!)) // wymaga 1-3
+        assertFalse(three.isUnlocked(Levels.byId("6-3")!!)) // wymaga 1-4
     }
 
     @Test
@@ -55,8 +63,8 @@ class ProgressTest {
         val t = Shop.buy(r.save, "theme_wood", 2) as PurchaseResult.Ok
         assertTrue("theme_wood" in t.save.owned)
         assertIs<PurchaseResult.AlreadyOwned>(Shop.buy(t.save.copy(sparks = 1000), "theme_wood", 3))
-        val bonus = Shop.buy(SaveData(sparks = 1000), "level_2-5", 1) as PurchaseResult.Ok
-        assertTrue(bonus.save.isUnlocked(Levels.byId("2-5")!!))
+        val bonus = Shop.buy(SaveData(sparks = 1000), "level_3-5", 1) as PurchaseResult.Ok
+        assertTrue(bonus.save.isUnlocked(Levels.byId("3-5")!!))
     }
 
     @Test

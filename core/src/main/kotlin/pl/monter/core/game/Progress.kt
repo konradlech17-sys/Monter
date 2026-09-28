@@ -33,6 +33,11 @@ data class SaveData(
     val activeHelmet: String = "helmet_yellow",
     val achievements: Set<String> = emptySet(),
     val stats: Stats = Stats(),
+    /** Poziomy, których wprowadzenie teoretyczne gracz już widział. */
+    val seenIntro: Set<String> = emptySet(),
+    /** Ustawienia: widok 3D planszy, wibracje. */
+    val view3d: Boolean = true,
+    val haptics: Boolean = true,
     val updatedAt: Long = 0,
 ) {
     fun result(level: Level, d: Difficulty) = results[key(level.id, d)]
@@ -41,11 +46,22 @@ data class SaveData(
 
     fun completed(level: Level) = Difficulty.entries.any { result(level, it) != null }
 
+    /**
+     * Zasady odblokowania: poziom bonusowy – kupiony w sklepie; poziom serwisowy – po ukończeniu poziomu bazowego;
+     * pozostałe – po poprzednim poziomie rozdziału. Rozdział otwiera się po ukończeniu 3 poziomów poprzedniego.
+     */
     fun isUnlocked(level: Level): Boolean {
         if (level.unlockCost != null) return "level_${level.id}" in owned
-        val idx = Levels.campaign.indexOf(level)
-        return idx <= 0 || completed(Levels.campaign[idx - 1])
+        level.requires?.let { req -> return Levels.byId(req)?.let { completed(it) } ?: true }
+        val inChapter = Levels.inChapter(level.chapter).filter { it.unlockCost == null }
+        val idx = inChapter.indexOf(level)
+        if (idx > 0) return completed(inChapter[idx - 1])
+        if (level.chapter == 1) return true
+        val prev = Levels.inChapter(level.chapter - 1).filter { it.unlockCost == null }
+        return prev.count { completed(it) } >= minOf(Levels.CHAPTER_GATE, prev.size)
     }
+
+    fun introSeen(level: Level) = level.id in seenIntro
 
     fun toJson(): String = json.encodeToString(this)
 
@@ -76,6 +92,7 @@ data class SaveData(
                 results = results,
                 owned = a.owned + b.owned,
                 achievements = a.achievements + b.achievements,
+                seenIntro = a.seenIntro + b.seenIntro,
                 totalEarned = maxOf(a.totalEarned, b.totalEarned),
                 stats = Stats(
                     checks = maxOf(a.stats.checks, b.stats.checks),

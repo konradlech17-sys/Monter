@@ -23,7 +23,8 @@ class ValidatorTest {
 
     @Test
     fun `every level has a reference solution that passes on HARD without warnings`() {
-        assertEquals(Levels.all.map { it.id }.toSet(), Solutions.all.keys)
+        assertTrue(Levels.all.size >= 35, "Poziomów: ${Levels.all.size}")
+        assertEquals(Levels.all.size, Levels.all.map { it.id }.toSet().size, "Zdublowane id poziomów")
         for ((id, s) in Solutions.all) {
             val r = s.check(Difficulty.HARD)
             assertTrue(r.issues.isEmpty(), "Poziom $id:\n${r.dump()}")
@@ -31,10 +32,62 @@ class ValidatorTest {
     }
 
     @Test
-    fun `empty board fails`() {
-        for (level in Levels.all.filter { it.prewired.isEmpty() }) {
-            assertFalse(BuildSession(level).check().passed, level.id)
+    fun `starting board never passes`() {
+        for (level in Levels.all.filter { it.solution.wires.isNotEmpty() || it.story != null }) {
+            val r = BuildSession(level).check(Difficulty.EASY)
+            assertFalse(r.passed, "Poziom ${level.id} zalicza się bez żadnej pracy")
         }
+    }
+
+    @Test
+    fun `service levels start broken and explain the fault`() {
+        val service = Levels.all.filter { it.story != null }
+        assertEquals(8, service.size)
+        for (level in service) {
+            val r = BuildSession(level).check(Difficulty.EASY)
+            assertTrue(r.errors.isNotEmpty(), level.id)
+            assertTrue(Solutions.all.getValue(level.id).check(Difficulty.HARD).passed, level.id)
+        }
+    }
+
+    @Test
+    fun `every part is reachable on the board and inside bounds`() {
+        for (level in Levels.all) for (p in level.parts) {
+            assertTrue(p.x >= 0 && p.y >= 0 && p.x + p.kind.w <= level.width + 1 && p.y + p.kind.h <= level.height + 1, "${level.id}/${p.id} poza planszą")
+        }
+    }
+
+    @Test
+    fun `parts do not overlap`() {
+        for (level in Levels.all) {
+            val ps = level.parts
+            for (i in ps.indices) for (j in i + 1 until ps.size) {
+                val a = ps[i]; val b = ps[j]
+                val overlap = a.x < b.x + b.kind.w && b.x < a.x + a.kind.w && a.y < b.y + b.kind.h && b.y < a.y + a.kind.h
+                assertFalse(overlap, "${level.id}: ${a.id} nachodzi na ${b.id}")
+            }
+        }
+    }
+
+    @Test
+    fun `motor without N works and wrong rotation is an error`() {
+        val sim = Solutions.all.getValue("5-2").simulate(emptyMap())
+        assertTrue(sim.loads.getValue("motor").on)
+        val broken = BuildSession(Levels.byId("6-7")!!).check(Difficulty.EASY)
+        assertTrue("load.rotation" in broken.codes(), broken.dump())
+    }
+
+    @Test
+    fun `two RCDs need separate neutral bars`() {
+        val s = solve("4-3") {
+            // wzorcowe przewody, ale obwód łazienki bierze N z szyny pierwszego RCD
+            for (w in Levels.byId("4-3")!!.solution.wires) {
+                val b = if (w.b.part == "c3" && w.b.terminal == "N") pl.monter.core.model.TermRef("nbar1", "4") else w.b
+                s = s.connect(w.a, b, w.color, w.cs)
+            }
+        }
+        val sim = s.simulate(emptyMap())
+        assertTrue(sim.tripped.any { it.startsWith("rcd") }, sim.trips.toString())
     }
 
     @Test
@@ -114,14 +167,14 @@ class ValidatorTest {
 
     @Test
     fun `breaker selection`() {
-        val r = solve("3-2") { choose("rcd", "rcd40_100_A"); choose("m1", "B16"); choose("m2", "B16"); choose("m3", "B20") }.check()
+        val r = solve("4-2") { choose("rcd", "rcd40_100_A"); choose("m1", "B16"); choose("m2", "B16"); choose("m3", "B20") }.check()
         val codes = r.codes()
         assertTrue("prot.rcd" in codes, r.dump())
         assertTrue("prot.rating" in codes, r.dump())
         assertTrue("cs.phase" in codes, r.dump())
-        val small = solve("3-2") { choose("rcd", "rcd16_30_A"); choose("m1", "B10"); choose("m2", "B16"); choose("m3", "B16") }.check()
+        val small = solve("4-2") { choose("rcd", "rcd16_30_A"); choose("m1", "B10"); choose("m2", "B16"); choose("m3", "B16") }.check()
         assertTrue("prot.rcd.in" in small.codes(), small.dump())
-        val ac = solve("3-2") { choose("rcd", "rcd40_30_AC"); choose("m1", "B10"); choose("m2", "B16"); choose("m3", "B16") }
+        val ac = solve("4-2") { choose("rcd", "rcd40_30_AC"); choose("m1", "B10"); choose("m2", "B16"); choose("m3", "B16") }
         assertTrue(ac.check(Difficulty.MEDIUM).passed)
         val acIssues = ac.check(Difficulty.MEDIUM).issues
         assertEquals(2, acIssues.size) // oba obwody gniazd

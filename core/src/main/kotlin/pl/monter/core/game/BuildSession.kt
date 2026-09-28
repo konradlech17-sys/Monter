@@ -55,7 +55,15 @@ data class BuildSession(
 
     val playerWires get() = wires.filter { !it.fixed }
 
-    fun validate(difficulty: Difficulty): Report = Validator(level, playerWires, choices, difficulty).validate()
+    fun validate(difficulty: Difficulty): Report = Validator(level, wires, choices, difficulty).validate()
 
     fun simulate(controls: Map<String, Int>): SimResult = Simulator(level.parts, wires, choices).simulate(controls)
 }
+
+/** Stan planszy z ułożonym wzorcowym rozwiązaniem. */
+fun Level.solved(): BuildSession = BuildSession(
+    level = this,
+    wires = prewired.filter { it.fixed } + solution.wires.mapIndexed { i, w -> Wire(i + 1, w.a, w.b, w.color, w.cs) },
+    choices = solution.choices,
+    nextId = solution.wires.size + 1,
+)

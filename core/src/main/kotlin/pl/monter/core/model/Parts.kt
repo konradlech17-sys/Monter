@@ -59,6 +59,17 @@ enum class Kind(
             t("N", "N", 101, 106, Role.N), t("PE", "PE", 128, 106, Role.PE),
         ),
     ),
+    FAN(
+        "Wentylator łazienkowy", 110f, 110f, Category.LOAD,
+        listOf(t("L", "L", 30, 96, Role.SWITCHED), t("N", "N", 80, 96, Role.N)),
+    ),
+    MOTOR(
+        "Silnik 3~", 150f, 120f, Category.LOAD,
+        listOf(
+            t("L1", "U1", 22, 106, Role.L1), t("L2", "V1", 54, 106, Role.L2), t("L3", "W1", 86, 106, Role.L3),
+            t("PE", "PE", 128, 106, Role.PE),
+        ),
+    ),
     SWITCH_1(
         "Łącznik jednobiegunowy", 90f, 100f, Category.CONTROL,
         listOf(t("L", "L", 25, 88, Role.L), t("P", "↑", 65, 88, Role.SWITCHED)), states = 2,
@@ -143,6 +154,10 @@ enum class Kind(
             t("N", "N", 140, 10, Role.N), t("PE", "PE", 80, 110, Role.PE),
         ),
     ),
+    SPD_2P(
+        "Ogranicznik przepięć 1F", 80f, 120f, Category.LOAD,
+        listOf(t("L", "L", 20, 10, Role.L), t("N", "N", 60, 10, Role.N), t("PE", "PE", 40, 110, Role.PE)),
+    ),
     N_BAR("Szyna N", 264f, 36f, Category.CONNECTOR, row(18, 1, Role.N, (0 until 8).map { 20 + it * 32 })),
     PE_BAR("Szyna PE", 264f, 36f, Category.CONNECTOR, row(18, 1, Role.PE, (0 until 8).map { 20 + it * 32 })),
     CIRCUIT_1P(
@@ -165,6 +180,7 @@ enum class Kind(
     val isSupply get() = this == SUPPLY_1P || this == SUPPLY_3P
     val isBar get() = this == N_BAR || this == PE_BAR
     val isConnector get() = category == Category.CONNECTOR
+    val isSpd get() = this == SPD_4P || this == SPD_2P
 
     fun terminal(id: String): TerminalDef = terminals.first { it.id == id }
 

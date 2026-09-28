@@ -2,7 +2,9 @@ package pl.monter.core.level
 
 import pl.monter.core.model.CrossSection
 import pl.monter.core.model.Part
+import pl.monter.core.model.TermRef
 import pl.monter.core.model.Wire
+import pl.monter.core.model.WireColor
 
 /** Stan elementów sterujących (łączników) – id elementu → numer stanu. */
 class Controls(val states: Map<String, Int>) {
@@ -33,6 +35,14 @@ data class ChoiceRule(
     val explain: Map<String, String>,
 )
 
+/** Przewód wzorcowego rozwiązania. */
+data class SolWire(val a: TermRef, val b: TermRef, val color: WireColor, val cs: CrossSection) {
+    fun same(x: TermRef, y: TermRef) = (a == x && b == y) || (a == y && b == x)
+}
+
+/** Wzorcowe rozwiązanie poziomu – służy do testów, podpowiedzi i trybu „Uczeń". */
+data class Solution(val wires: List<SolWire> = emptyList(), val choices: Map<String, String> = emptyMap())
+
 data class Level(
     val id: String,
     val chapter: Int,
@@ -58,6 +68,11 @@ data class Level(
     val hints: List<String> = emptyList(),
     val width: Float = 1000f,
     val height: Float = 600f,
+    val solution: Solution = Solution(),
+    /** Poziom serwisowy: opis zgłoszenia klienta. */
+    val story: String? = null,
+    /** Id poziomu, który trzeba ukończyć, żeby odblokować ten (null = reguła rozdziału). */
+    val requires: String? = null,
 ) {
     fun part(id: String): Part = parts.first { it.id == id }
     fun partOrNull(id: String): Part? = parts.firstOrNull { it.id == id }
