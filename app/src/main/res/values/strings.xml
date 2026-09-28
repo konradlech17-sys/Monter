@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Monter – Elektryk</string>
+
+    <!--
+        Google Play Games Services: wklej tu identyfikator projektu (sam numer) z Play Console.
+        Dopóki jest 0, gra działa w trybie offline (zapis tylko lokalny).
+    -->
+    <string name="game_services_project_id" translatable="false">0</string>
+
+    <!-- Identyfikatory osiągnięć i tabeli wyników z Play Console (puste = pomijane). -->
+    <string name="pgs_leaderboard_sparks" translatable="false"></string>
+    <string name="pgs_ach_first_light" translatable="false"></string>
+    <string name="pgs_ach_flawless" translatable="false"></string>
+    <string name="pgs_ach_stairs" translatable="false"></string>
+    <string name="pgs_ach_xor" translatable="false"></string>
+    <string name="pgs_ach_sparks" translatable="false"></string>
+    <string name="pgs_ach_safety10" translatable="false"></string>
+    <string name="pgs_ach_chapter1" translatable="false"></string>
+    <string name="pgs_ach_chapter2" translatable="false"></string>
+    <string name="pgs_ach_chapter3" translatable="false"></string>
+    <string name="pgs_ach_master" translatable="false"></string>
+    <string name="pgs_ach_collector" translatable="false"></string>
+    <string name="pgs_ach_rich" translatable="false"></string>
+    <string name="pgs_ach_perfectionist" translatable="false"></string>
+</resources>

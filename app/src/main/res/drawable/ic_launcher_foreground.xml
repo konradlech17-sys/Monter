@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kask elektryka z błyskawicą. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFC107"
+        android:pathData="M30,64 C30,46 40,34 54,34 C68,34 78,46 78,64 L84,64 C86,64 86,70 84,70 L24,70 C22,70 22,64 24,64 Z" />
+    <path android:fillColor="#FFE0A800" android:pathData="M50,34 L58,34 L58,62 L50,62 Z" />
+    <path android:fillColor="#FF29B6F6"
+        android:pathData="M56,40 L44,58 L53,58 L49,76 L64,54 L55,54 L60,40 Z" />
+</vector>
