@@ -23,6 +23,7 @@ i sprawdza go według zasad z polskich norm (PN-HD 60364, PN-EN 60445, PN-EN 501
 - **Procedura BHP** przed pracą – „5 zasad bezpieczeństwa" z fałszywymi kartami; po 3 bezbłędnych razach skrócona do animowanej checklisty. Teoria tylko przy pierwszym podejściu (potem pod 📘).
 - **Wygodny montaż**: przeciąganie przewodu palcem z „przyciąganiem" do zacisku, automatyczny kolor i przekrój (Uczeń/Czeladnik),
   podświetlanie właściwych zacisków (Uczeń), podpowiedź „następny przewód", przytrzymanie = usunięcie, cofanie, zoom, wibracje.
+- **Przewody pod kątem 90°** – trasowane pionowo i poziomo jak w prawdziwej rozdzielnicy, równoległe przewody na osobnych torach.
 - **Własny układ planszy**: przeciągnij obudowę aparatu, żeby go przestawić (przewody podążają za nim, leżą pod aparatami). Układ zapisuje się dla każdego poziomu.
 - **Widok 2.5D**: plansza w perspektywie, cienie przewodów, bryłowate aparaty, animacje wkładania przewodu, elektronów,
   obracającego się silnika i wentylatora, wstrząs przy zwarciu.

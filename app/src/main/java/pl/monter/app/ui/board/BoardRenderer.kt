@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -115,7 +116,7 @@ fun DrawScope.drawBoard(inp: RenderInput, tm: TextMeasurer) {
     // 1) Przewody (z cieniami) – leżą NA PŁYCIE, POD aparatami, jak w prawdziwej rozdzielnicy
     for (w in inp.wires) {
         val path = level.wirePath(w, sagScale(inp, w))
-        translate(5f, 9f) { drawPath(path, Color.Black.copy(alpha = 0.16f), style = Stroke(wireWidth(w) + 2f, cap = StrokeCap.Round)) }
+        translate(5f, 9f) { drawPath(path, Color.Black.copy(alpha = 0.16f), style = Stroke(wireWidth(w) + 2f, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
     }
     for (w in inp.wires) drawWire(w, inp)
 
@@ -192,28 +193,27 @@ private fun DrawScope.drawWire(w: Wire, inp: RenderInput) {
     if (w.id in inp.errorWires || w.id in inp.hotWires) {
         val a = 0.4f + 0.4f * sin(inp.time * 6f)
         val c = if (w.id in inp.hotWires) Color(0xFFFF7043) else Color(0xFFEF5350)
-        drawPath(path, c.copy(alpha = a), style = Stroke(width + 12f, cap = StrokeCap.Round))
+        drawPath(path, c.copy(alpha = a), style = Stroke(width + 12f, cap = StrokeCap.Round, join = StrokeJoin.Round))
     }
-    if (w.id == inp.selectedWire) drawPath(path, Color(0xFFFFC107).copy(alpha = 0.7f), style = Stroke(width + 10f, cap = StrokeCap.Round))
-    if (inp.theme.neon) drawPath(path, w.color.ui().copy(alpha = 0.35f), style = Stroke(width + 8f, cap = StrokeCap.Round))
-    drawPath(path, Color.Black.copy(alpha = 0.4f), style = Stroke(width + 2f, cap = StrokeCap.Round))
-    drawPath(path, w.color.ui(), style = Stroke(width, cap = StrokeCap.Round))
+    if (w.id == inp.selectedWire) drawPath(path, Color(0xFFFFC107).copy(alpha = 0.7f), style = Stroke(width + 10f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    if (inp.theme.neon) drawPath(path, w.color.ui().copy(alpha = 0.35f), style = Stroke(width + 8f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    drawPath(path, Color.Black.copy(alpha = 0.4f), style = Stroke(width + 2f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    drawPath(path, w.color.ui(), style = Stroke(width, cap = StrokeCap.Round, join = StrokeJoin.Round))
     if (w.color == WireColor.GREEN_YELLOW) {
         drawPath(path, Color(0xFFFDD835), style = Stroke(width, cap = StrokeCap.Butt, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))))
     }
     // Połysk izolacji (walcowy kształt przewodu)
     translate(-width * 0.18f, -width * 0.22f) {
-        drawPath(path, Color.White.copy(alpha = 0.28f), style = Stroke(width * 0.28f, cap = StrokeCap.Round))
+        drawPath(path, Color.White.copy(alpha = 0.28f), style = Stroke(width * 0.28f, cap = StrokeCap.Round, join = StrokeJoin.Round))
     }
     if (!w.fixed && age > 0.3f) {
-        val c = level.wireControls(w)
-        drawCircle(Color(0xFFB0BEC5), width * 0.55f, c[0]); drawCircle(Color(0xFFB0BEC5), width * 0.55f, c[3])
+        drawCircle(Color(0xFFB0BEC5), width * 0.55f, level.terminalPos(w.a)); drawCircle(Color(0xFFB0BEC5), width * 0.55f, level.terminalPos(w.b))
     }
     val sim = inp.sim ?: return
     if (sim.wireLive(w)) {
         val lv = sim.potentials(w.a).all { it.isLowVoltage }
         val glow = if (lv) Color(0xFF80DEEA) else Color(0xFFFFF59D)
-        drawPath(path, glow.copy(alpha = 0.25f), style = Stroke(width + 6f, cap = StrokeCap.Round))
+        drawPath(path, glow.copy(alpha = 0.25f), style = Stroke(width + 6f, cap = StrokeCap.Round, join = StrokeJoin.Round))
         // „Elektrony" płynące wzdłuż przewodu
         val pm = PathMeasure(); pm.setPath(path, false)
         val len = pm.length
@@ -236,10 +236,10 @@ private fun DrawScope.drawRubberBand(inp: RenderInput) {
     val a = level.terminalPos(from)
     val target = inp.dragHover?.let { level.terminalPos(it) } ?: pos
     val downB = inp.dragHover?.let { level.terminalDown(it) } ?: (target.y > a.y)
-    val path = curvePath(curveControls(a, level.terminalDown(from), target, downB, 0.6f))
-    translate(5f, 9f) { drawPath(path, Color.Black.copy(alpha = 0.15f), style = Stroke(8f, cap = StrokeCap.Round)) }
-    drawPath(path, Color.Black.copy(alpha = 0.4f), style = Stroke(8f, cap = StrokeCap.Round))
-    drawPath(path, inp.dragColor.ui(), style = Stroke(6f, cap = StrokeCap.Round))
+    val path = polyPath(orthoRoute(a, level.terminalDown(from), target, downB))
+    translate(5f, 9f) { drawPath(path, Color.Black.copy(alpha = 0.15f), style = Stroke(8f, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
+    drawPath(path, Color.Black.copy(alpha = 0.4f), style = Stroke(8f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    drawPath(path, inp.dragColor.ui(), style = Stroke(6f, cap = StrokeCap.Round, join = StrokeJoin.Round))
     if (inp.dragColor == WireColor.GREEN_YELLOW) {
         drawPath(path, Color(0xFFFDD835), style = Stroke(6f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))))
     }
@@ -250,9 +250,9 @@ private fun DrawScope.drawRubberBand(inp: RenderInput) {
 
 private fun DrawScope.drawGhost(g: SolWire, inp: RenderInput, tm: TextMeasurer) {
     val level = inp.level
-    val path = curvePath(curveControls(level.terminalPos(g.a), level.terminalDown(g.a), level.terminalPos(g.b), level.terminalDown(g.b)))
+    val path = polyPath(orthoRoute(level.terminalPos(g.a), level.terminalDown(g.a), level.terminalPos(g.b), level.terminalDown(g.b)))
     val a = 0.55f + 0.35f * sin(inp.time * 5f)
-    drawPath(path, Color.White.copy(alpha = a * 0.6f), style = Stroke(12f, cap = StrokeCap.Round))
+    drawPath(path, Color.White.copy(alpha = a * 0.6f), style = Stroke(12f, cap = StrokeCap.Round, join = StrokeJoin.Round))
     drawPath(path, g.color.ui().copy(alpha = a), style = Stroke(6f, cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 10f), -inp.time * 40f)))
     for (t in listOf(g.a, g.b)) {
         val c = level.terminalPos(t)

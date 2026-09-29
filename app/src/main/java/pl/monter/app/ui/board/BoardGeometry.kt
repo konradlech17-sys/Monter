@@ -51,28 +51,44 @@ fun Level.terminalDown(t: TermRef): Boolean {
 
 fun Part.rect() = Rect(x, y, x + kind.w, y + kind.h)
 
-/** Punkty kontrolne krzywej Béziera – przewód „zwisa" jak prawdziwy. [sagScale] pozwala animować sprężynowanie. */
-fun curveControls(a: Offset, aDown: Boolean, b: Offset, bDown: Boolean, sagScale: Float = 1f): Array<Offset> {
-    val d = hypot(b.x - a.x, b.y - a.y)
-    val sag = (26f + d * 0.22f) * sagScale
-    val c1 = a + Offset(0f, if (aDown) sag else -sag)
-    val c2 = b + Offset(0f, if (bDown) sag else -sag)
-    return arrayOf(a, c1, c2, b)
+/**
+ * Trasa przewodu „po elektrykowemu": wyłącznie odcinki pionowe i poziome (łamanie pod kątem 90°).
+ * Z zacisku przewód wychodzi pionowo (w dół z zacisków dolnych, w górę z górnych), biegnie
+ * poziomym „korytkiem" i wchodzi pionowo do drugiego zacisku.
+ *
+ * @param lane numer toru – równoległe przewody dostają przesunięte korytka, żeby się nie nakładały
+ * @param sagScale mnożnik długości wyjścia z zacisku (animacja sprężynowania)
+ */
+fun orthoRoute(a: Offset, aDown: Boolean, b: Offset, bDown: Boolean, lane: Int = 0, sagScale: Float = 1f): List<Offset> {
+    val stub = (22f + lane * 7f) * sagScale
+    val a1 = a.y + if (aDown) stub else -stub
+    val b1 = b.y + if (bDown) stub else -stub
+    // Ten sam pion – prosty odcinek
+    if (kotlin.math.abs(a.x - b.x) < 0.5f) return listOf(a, b)
+    val channel: Float? = when {
+        aDown && bDown -> maxOf(a1, b1)
+        !aDown && !bDown -> minOf(a1, b1)
+        aDown && !bDown -> if (a1 <= b1) (a1 + b1) / 2f else null
+        else -> if (a1 >= b1) (a1 + b1) / 2f else null
+    }
+    if (channel != null) return listOf(a, Offset(a.x, channel), Offset(b.x, channel), b)
+    // Zaciski „odwrócone" (np. dolny zacisk nad górnym) – obejście pionowym korytkiem między nimi
+    val midX = (a.x + b.x) / 2f + lane * 7f
+    return listOf(a, Offset(a.x, a1), Offset(midX, a1), Offset(midX, b1), Offset(b.x, b1), b)
 }
 
-fun Level.wireControls(w: Wire, sagScale: Float = 1f): Array<Offset> =
-    curveControls(terminalPos(w.a), terminalDown(w.a), terminalPos(w.b), terminalDown(w.b), sagScale)
-
-fun curvePath(c: Array<Offset>): Path = Path().apply {
-    moveTo(c[0].x, c[0].y); cubicTo(c[1].x, c[1].y, c[2].x, c[2].y, c[3].x, c[3].y)
+fun polyPath(points: List<Offset>): Path = Path().apply {
+    moveTo(points[0].x, points[0].y)
+    for (i in 1 until points.size) lineTo(points[i].x, points[i].y)
 }
 
-fun Level.wirePath(w: Wire, sagScale: Float = 1f): Path = curvePath(wireControls(w, sagScale))
+/** Tor przewodu: równoległe przewody z tego samego zacisku rozsuwamy na kolejne tory. */
+private fun laneOf(w: Wire) = ((w.id % 5) + 5) % 5
 
-private fun bezier(p: Array<Offset>, t: Float): Offset {
-    val u = 1 - t
-    return p[0] * (u * u * u) + p[1] * (3 * u * u * t) + p[2] * (3 * u * t * t) + p[3] * (t * t * t)
-}
+fun Level.wirePoints(w: Wire, sagScale: Float = 1f): List<Offset> =
+    orthoRoute(terminalPos(w.a), terminalDown(w.a), terminalPos(w.b), terminalDown(w.b), laneOf(w), sagScale)
+
+fun Level.wirePath(w: Wire, sagScale: Float = 1f): Path = polyPath(wirePoints(w, sagScale))
 
 private fun distToSegment(p: Offset, a: Offset, b: Offset): Float {
     val ab = b - a
@@ -93,13 +109,10 @@ fun Level.hitWire(p: Offset, wires: List<Wire>, radius: Float): Wire? {
     var best: Wire? = null
     var bestD = radius
     for (w in wires) {
-        val c = wireControls(w)
-        var prev = c[0]
-        for (i in 1..24) {
-            val q = bezier(c, i / 24f)
-            val d = distToSegment(p, prev, q)
+        val pts = wirePoints(w)
+        for (i in 1 until pts.size) {
+            val d = distToSegment(p, pts[i - 1], pts[i])
             if (d < bestD) { bestD = d; best = w }
-            prev = q
         }
     }
     return best
