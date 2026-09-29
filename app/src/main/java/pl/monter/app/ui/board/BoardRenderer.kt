@@ -70,6 +70,9 @@ class RenderInput(
     val wireBorn: Map<Int, Float> = emptyMap(),
     /** Czas ostatniego przełączenia – do animacji rozjaśniania lamp. */
     val lastToggle: Float = -10f,
+    /** Element przestawiany palcem – rysowany „uniesiony" nad planszą. */
+    val lifted: String? = null,
+    val liftedValid: Boolean = true,
 )
 
 private val Brass = Color(0xFFD4AF37)
@@ -108,34 +111,56 @@ fun DrawScope.drawBoard(inp: RenderInput, tm: TextMeasurer) {
     drawRails(level)
 
     val tripped = inp.sim?.tripped ?: emptySet()
-    for (p in level.parts) {
-        translate(p.x, p.y) { drawPart(p, inp, tm, p.id in tripped) }
-        if (p.id in inp.errorParts) {
-            val a = 0.5f + 0.5f * sin(inp.time * 6f)
-            drawRoundRect(Color(0xFFEF5350).copy(alpha = a), Offset(p.x - 6, p.y - 6), Size(p.kind.w + 12, p.kind.h + 12), CornerRadius(12f), style = Stroke(4f))
-        }
-    }
 
-    // Cienie przewodów rzucane na płytę – daje wrażenie głębi
+    // 1) Przewody (z cieniami) – leżą NA PŁYCIE, POD aparatami, jak w prawdziwej rozdzielnicy
     for (w in inp.wires) {
         val path = level.wirePath(w, sagScale(inp, w))
         translate(5f, 9f) { drawPath(path, Color.Black.copy(alpha = 0.16f), style = Stroke(wireWidth(w) + 2f, cap = StrokeCap.Round)) }
     }
     for (w in inp.wires) drawWire(w, inp)
+
+    // 2) Aparaty przykrywają przewody
+    for (p in level.parts) if (p.id != inp.lifted) drawPartAt(p, inp, tm, p.id in tripped)
+
+    // 3) Zaciski na wierzchu – zawsze widoczne i łatwe do trafienia
+    for (p in level.parts) if (p.id != inp.lifted) drawTerminals(p, inp, tm)
+
+    // 4) Podpowiedzi i przeciągany przewód nad wszystkim
     inp.ghost?.let { drawGhost(it, inp, tm) }
     drawRubberBand(inp)
-    for (p in level.parts) drawTerminals(p, inp, tm)
+
+    // 5) Przestawiany element – uniesiony, z dużym cieniem
+    inp.lifted?.let { id ->
+        val p = level.part(id)
+        drawRoundRect(Color.Black.copy(alpha = 0.3f), Offset(p.x + 14, p.y + 22), Size(p.kind.w, p.kind.h), CornerRadius(12f))
+        translate(-4f, -8f) {
+            drawPartAt(p, inp, tm, p.id in tripped)
+            drawTerminals(p, inp, tm)
+            drawRoundRect(
+                (if (inp.liftedValid) Color(0xFF66BB6A) else Color(0xFFEF5350)).copy(alpha = 0.9f),
+                Offset(p.x - 6, p.y - 6), Size(p.kind.w + 12, p.kind.h + 12), CornerRadius(12f), style = Stroke(3f),
+            )
+        }
+    }
     drawSparks(inp)
 }
 
 private fun DrawScope.drawRails(level: Level) {
-    val din = level.parts.filter { it.kind.isSwitchgear || it.kind.isSpd || (it.kind == Kind.TRANSFORMER && level.parts.any { p -> p.kind.isSwitchgear }) }
+    val din = level.parts.filter { it.kind.isSwitchgear || it.kind.isSpd || it.kind == Kind.CONTACTOR || (it.kind == Kind.TRANSFORMER && level.parts.any { p -> p.kind.isSwitchgear }) }
     din.groupBy { it.y }.forEach { (y, row) ->
         val x0 = row.minOf { it.x } - 20; val x1 = row.maxOf { it.x + it.kind.w } + 20
         val ry = y + 50
         drawRect(Color.Black.copy(alpha = 0.2f), Offset(x0 + 3, ry + 5), Size(x1 - x0, 20f))
         drawRect(Brush.verticalGradient(listOf(Color(0xFFCFD8DC), Color(0xFF78909C)), ry, ry + 20), Offset(x0, ry), Size(x1 - x0, 20f))
         drawRect(Color.White.copy(alpha = 0.5f), Offset(x0, ry + 2), Size(x1 - x0, 3f))
+    }
+}
+
+private fun DrawScope.drawPartAt(p: Part, inp: RenderInput, tm: TextMeasurer, tripped: Boolean) {
+    translate(p.x, p.y) { drawPart(p, inp, tm, tripped) }
+    if (p.id in inp.errorParts) {
+        val a = 0.5f + 0.5f * sin(inp.time * 6f)
+        drawRoundRect(Color(0xFFEF5350).copy(alpha = a), Offset(p.x - 6, p.y - 6), Size(p.kind.w + 12, p.kind.h + 12), CornerRadius(12f), style = Stroke(4f))
     }
 }
 
@@ -424,6 +449,47 @@ private fun DrawScope.drawPart(p: Part, inp: RenderInput, tm: TextMeasurer, trip
             text(tm, sym, Offset(w / 2, 37f), 13f, Dark, bold = true)
             terminalStrip(4f, 78f, w - 8, 20f)
         }
+        Kind.DIMMER -> {
+            body(4f, 0f, w - 8, 74f, Color.White, 10f)
+            val c = Offset(w / 2, 37f)
+            drawCircle(Color.Black.copy(alpha = 0.2f), 24f, c + Offset(2f, 3f))
+            drawCircle(Brush.radialGradient(listOf(Color.White, Color(0xFFB0BEC5)), c - Offset(6f, 6f), 30f), 24f, c)
+            val ang = if (st == 1) 120f else -120f
+            rotate(ang, c) { drawLine(Color(0xFFFFA000), c, c + Offset(0f, -18f), 4f, StrokeCap.Round) }
+            if (st == 1) drawArc(Color(0xFFFFC107).copy(alpha = 0.8f), 150f, 240f * fade, false, c - Offset(30f, 30f), Size(60f, 60f), style = Stroke(3f))
+            terminalStrip(4f, 78f, w - 8, 20f)
+        }
+        Kind.STRIKE -> {
+            body(8f, 0f, w - 16, 74f, Color(0xFF90A4AE), 8f, Color(0xFF546E7A))
+            drawRoundRect(Color(0xFF37474F), Offset(w / 2 - 18, 20f), Size(36f, 30f), CornerRadius(4f))
+            val open = on
+            drawRoundRect(Color(0xFFFFC107), Offset(w / 2 - (if (open) 30f else 10f), 28f), Size(20f, 14f), CornerRadius(3f))
+            text(tm, if (open) "🔓" else "🔒", Offset(w / 2, 62f), 14f, Dark)
+            if (damaged) smoke(Offset(w / 2, 30f), t)
+            terminalStrip(4f, 78f, w - 8, 20f)
+        }
+        Kind.BOILER -> {
+            body(14f, 0f, w - 28, 104f, Color.White, 30f)
+            val heat = if (on) fade else 0f
+            drawRoundRect(Brush.verticalGradient(listOf(Color(0xFF90CAF9), Color(0xFFEF5350).copy(alpha = 0.3f + 0.6f * heat)), 12f, 96f), Offset(26f, 14f), Size(w - 52, 80f), CornerRadius(20f))
+            if (on) for (i in 0 until 3) {
+                val a = ((t * 0.8f + i / 3f) % 1f)
+                drawCircle(Color.White.copy(alpha = (1f - a) * 0.7f), 3f + a * 3f, Offset(w / 2 - 12f + i * 12f, 90f - a * 70f))
+            }
+            text(tm, if (on) "🔥" else "💧", Offset(w / 2, 54f), 18f, Dark)
+            terminalStrip(4f, 106f, w - 8, 22f)
+            if (damaged) smoke(Offset(w / 2, 30f), t)
+        }
+        Kind.WALLBOX -> {
+            body(8f, 0f, w - 16, 104f, Color(0xFF263238), 14f, Color(0xFF102027))
+            drawRoundRect(Color(0xFF37474F), Offset(24f, 14f), Size(w - 48, 30f), CornerRadius(6f))
+            val charge = if (on) ((t * 0.25f) % 1f) else 0f
+            drawRoundRect(Color(0xFF66BB6A), Offset(28f, 20f), Size((w - 56) * charge, 18f), CornerRadius(4f))
+            text(tm, if (on) "⚡ ładowanie" else "EV", Offset(w / 2, 29f), 10f, Color.White, bold = true)
+            text(tm, "🚗", Offset(w / 2, 72f), 26f, Color.White)
+            terminalStrip(4f, 106f, w - 8, 22f)
+        }
+        Kind.CONTACTOR -> drawModule(p, inp, tm, st, tripped, on)
         Kind.SWITCH_2 -> {
             body(4f, 0f, w - 8, 74f, Color.White, 10f)
             rocker(Offset(14f, 10f), 38f, 54f, st and 1 != 0)
@@ -468,9 +534,18 @@ private fun DrawScope.drawPart(p: Part, inp: RenderInput, tm: TextMeasurer, trip
             body(4f, 0f, w - 8, 74f, Color.White, 10f)
             val c = Offset(w / 2, 36f)
             val dusk = p.label.contains("zmierzch", ignoreCase = true)
+            val timer = p.label.contains("Zegar")
             drawCircle(Brush.radialGradient(listOf(Color.White, Color(0xFFBDBDBD)), c - Offset(8f, 8f), 34f), 26f, c)
             for (i in 0 until 4) drawCircle(Color(0x22000000), 26f - i * 6f, c, style = Stroke(1f))
-            if (st == 1) text(tm, if (dusk) "🌙" else "🚶", c, 22f, Dark) else if (dusk) text(tm, "☀️", c, 20f, Dark)
+            when {
+                timer -> {
+                    text(tm, if (st == 1) "🌙" else "☀️", c + Offset(0f, 2f), 18f, Dark)
+                    val ang = t * 30f
+                    rotate(ang, c) { drawLine(Dark, c, c + Offset(0f, -20f), 2f) }
+                }
+                st == 1 -> text(tm, if (dusk) "🌙" else "🚶", c, 22f, Dark)
+                dusk -> text(tm, "☀️", c, 20f, Dark)
+            }
             drawCircle(if (on) Color(0xFF66BB6A) else Color(0xFF9E9E9E), 4f, Offset(16f, 10f))
             terminalStrip(4f, 78f, w - 8, 20f)
         }
@@ -543,7 +618,13 @@ private fun DrawScope.drawModule(p: Part, inp: RenderInput, tm: TextMeasurer, st
         k.isRcd -> Color(0xFF1565C0)
         else -> Color(0xFF37474F)
     }
-    if (!k.isSpd) {
+    if (k == Kind.CONTACTOR) {
+        // Stycznik: okienko zwory – przesuwa się, gdy cewka jest pod napięciem
+        drawRoundRect(Color(0xFF455A64), Offset(w / 2 - 22, h * 0.36f), Size(44f, h * 0.28f), CornerRadius(4f))
+        val y = if (on) h * 0.44f else h * 0.38f
+        drawRoundRect(if (on) Color(0xFF66BB6A) else Color(0xFFB0BEC5), Offset(w / 2 - 18, y), Size(36f, h * 0.12f), CornerRadius(3f))
+        text(tm, if (on) "I" else "0", Offset(w / 2, h * 0.7f), 10f, Dark, bold = true)
+    } else if (!k.isSpd) {
         val lw = if (k == Kind.MCB_1P) 18f else w * 0.5f
         val lx = w / 2 - lw / 2
         drawRoundRect(Color(0xFF78909C), Offset(lx - 3, h * 0.36f), Size(lw + 6, h * 0.3f), CornerRadius(4f))
@@ -558,6 +639,7 @@ private fun DrawScope.drawModule(p: Part, inp: RenderInput, tm: TextMeasurer, st
         k.isMcb -> spec?.label ?: "?"
         k.isRcd -> spec?.rcdmA?.let { "${it}mA" } ?: "?"
         k.isMainSwitch -> "0-I"
+        k == Kind.CONTACTOR -> "K1 • 230V~"
         else -> "SPD"
     }
     text(tm, top, Offset(w / 2, 31f), if (k == Kind.MCB_1P) 9f else 11f, if (spec == null && p.options.isNotEmpty()) Color(0xFFE65100) else Dark, bold = true, maxWidth = w)

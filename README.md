@@ -6,21 +6,24 @@ i sprawdza go według zasad z polskich norm (PN-HD 60364, PN-EN 60445, PN-EN 501
 
 ## Co jest w grze
 
-**38 poziomów w 6 rozdziałach:**
+**58 poziomów w 8 rozdziałach:**
 
 | Rozdział | Poziomy |
 |---|---|
 | 1. Pierwsze kroki | żarówka, gniazdko, lampa z łącznikiem, gniazda przelotowe, 3 gniazda z puszki (WAGO), 2 lampy na 1 łączniku, pokój: światło + gniazdo |
-| 2. Łączniki | świecznikowy, schodowy, krzyżowy, 2 krzyżowe (4 miejsca), łazienka z wentylatorem, klatka schodowa z 2 lampami, przedpokój |
-| 3. Sygnalizacja i automatyka | dzwonek SELV, dzwonek z 2 przycisków, czujnik ruchu, czujnik z wymuszeniem, czujnik zmierzchowy (bonus) |
+| 2. Łączniki | świecznikowy, schodowy, krzyżowy, 2 krzyżowe (4 miejsca), łazienka z wentylatorem, klatka schodowa z 2 lampami, przedpokój, ściemniacz |
+| 3. Sygnalizacja i automatyka | dzwonek SELV, dzwonek z 2 przycisków, czujnik ruchu, czujnik z wymuszeniem, czujnik zmierzchowy (bonus), domofon z elektrozaczepem |
 | 4. Rozdzielnice 230 V | mieszkaniowa, dobór zabezpieczeń, dwa RCD, kuchenka, ochrona przepięciowa, dom 5 obwodów (bonus) |
 | 5. Trójfaza 400 V | gniazdo CEE, silnik pompy (kierunek obrotów!), płyta indukcyjna, rozdzielnica domowa, warsztat |
-| 6. Serwis – znajdź usterkę | 8 zgłoszeń klientów: „kopie przy wymianie żarówki", „ciepłe gniazdko", „RCD wybija", „pompa nie tłoczy wody"… |
+| 7. Styczniki i sterowanie | stycznik, bojler w taryfie G12, silnik ze stycznikiem, wentylator z 2 miejsc, ładowarka EV, hala na 3 fazach |
+| 8. Projekty | kuchnia, sypialnia, łazienka komplet, garaż z podrozdzielnicą, ogród z RCD, mieszkanie od rozdzielnicy do gniazdka |
+| 6. Serwis – znajdź usterkę | 14 zgłoszeń klientów: „kopie przy wymianie żarówki", „ciepłe gniazdko", „RCD wybija", „pompa nie tłoczy wody"… |
 
 - **3 poziomy trudności**: Uczeń (podpowiedzi ról zacisków, auto-kolor), Czeladnik, Mistrz (dobre praktyki obowiązkowe).
 - **Procedura BHP** przed pracą – „5 zasad bezpieczeństwa" z fałszywymi kartami; po 3 bezbłędnych razach skrócona do animowanej checklisty. Teoria tylko przy pierwszym podejściu (potem pod 📘).
 - **Wygodny montaż**: przeciąganie przewodu palcem z „przyciąganiem" do zacisku, automatyczny kolor i przekrój (Uczeń/Czeladnik),
   podświetlanie właściwych zacisków (Uczeń), podpowiedź „następny przewód", przytrzymanie = usunięcie, cofanie, zoom, wibracje.
+- **Własny układ planszy**: przeciągnij obudowę aparatu, żeby go przestawić (przewody podążają za nim, leżą pod aparatami). Układ zapisuje się dla każdego poziomu.
 - **Widok 2.5D**: plansza w perspektywie, cienie przewodów, bryłowate aparaty, animacje wkładania przewodu, elektronów,
   obracającego się silnika i wentylatora, wstrząs przy zwarciu.
 - **Tryb TEST** – przełączasz łączniki, widzisz przepływ prądu, świecące żarówki, dzwoniący dzwonek,

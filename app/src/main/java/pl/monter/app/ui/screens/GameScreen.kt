@@ -76,6 +76,7 @@ fun GameScreen(
     val st = remember(level.id, difficulty) {
         initial ?: GameState(level, difficulty).also {
             // Teorię pokazujemy tylko przy pierwszym podejściu – potem jest pod przyciskiem 📘.
+            it.layout = save.layouts[level.id].orEmpty().mapValues { (_, p) -> androidx.compose.ui.geometry.Offset(p.x, p.y) }
             it.phase = when {
                 !save.introSeen(level) -> Phase.INTRO
                 level.safetyProcedure -> Phase.SAFETY
@@ -201,7 +202,7 @@ private fun BuildScreen(
 
             Row(Modifier.fillMaxSize()) {
                 Box(Modifier.weight(1f).fillMaxHeight().padding(start = 8.dp, bottom = 8.dp).clip(RoundedCornerShape(16.dp))) {
-                    Board(st, theme, time, view3d = save.view3d, haptics = save.haptics, tutorial = save.stats.wiresLaid == 0, onShort = { vm.recordShort() }, onToggle3d = { vm.setView3d(!save.view3d) })
+                    Board(st, theme, time, view3d = save.view3d, haptics = save.haptics, tutorial = save.stats.wiresLaid == 0, onShort = { vm.recordShort() }, onToggle3d = { vm.setView3d(!save.view3d) }, onLayoutChanged = { vm.saveLayout(level.id, it) })
                     st.message?.let {
                         Text(
                             it, color = Color.White, fontSize = 12.sp,

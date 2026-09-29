@@ -141,6 +141,17 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (levelId !in s.seenIntro) update(s.copy(seenIntro = s.seenIntro + levelId))
     }
 
+    /** Zapamiętuje własny układ elementów poziomu (pusty = układ domyślny). */
+    fun saveLayout(levelId: String, layout: Map<String, androidx.compose.ui.geometry.Offset>) {
+        val s = _save.value
+        val layouts = if (layout.isEmpty()) s.layouts - levelId
+        else s.layouts + (levelId to layout.mapValues { (_, o) -> pl.monter.core.game.Pos(o.x, o.y) })
+        val next = s.copy(layouts = layouts, updatedAt = System.currentTimeMillis())
+        val unlocked = Achievements.newlyUnlocked(next, null)
+        update(next.copy(achievements = next.achievements + unlocked.map { it.id }))
+        announce(unlocked)
+    }
+
     fun setView3d(on: Boolean) = update(_save.value.copy(view3d = on))
 
     fun setHaptics(on: Boolean) = update(_save.value.copy(haptics = on))

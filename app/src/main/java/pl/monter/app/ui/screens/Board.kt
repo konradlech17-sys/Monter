@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import pl.monter.app.ui.board.BoardTheme
 import pl.monter.app.ui.board.RenderInput
 import pl.monter.app.ui.board.drawBoard
+import pl.monter.app.ui.board.hitPart
 import pl.monter.app.ui.board.hitTerminal
 import pl.monter.app.ui.board.terminalPos
 import pl.monter.app.ui.theme.Palette
@@ -66,6 +67,7 @@ internal fun Board(
     tutorial: Boolean,
     onShort: () -> Unit,
     onToggle3d: () -> Unit,
+    onLayoutChanged: (Map<String, Offset>) -> Unit,
 ) {
     val tm = rememberTextMeasurer(cacheSize = 256)
     val haptic = LocalHapticFeedback.current
@@ -110,7 +112,9 @@ internal fun Board(
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         val (bp, s0) = toBoard(down.position)
-                        val startTerm = if (st.mode == Mode.BUILD) level.hitTerminal(bp, terminalRadius(s0)) else null
+                        val startTerm = if (st.mode == Mode.BUILD) st.view.hitTerminal(bp, terminalRadius(s0)) else null
+                        // Chwycenie obudowy aparatu (nie zacisku) w trybie montażu = przestawianie
+                        val grabPart = if (st.mode == Mode.BUILD && startTerm == null) st.view.hitPart(bp) else null
                         var moved = false
                         var multi = false
                         var last = down.position
@@ -124,6 +128,7 @@ internal fun Board(
                             if (pressed.isEmpty()) break
                             if (pressed.size >= 2) {
                                 multi = true
+                                if (st.moving != null) st.endMove()
                                 st.dragFrom = null; st.dragHover = null; st.dragPos = null
                                 zoomAround(ev.calculateCentroid(useCurrent = true), ev.calculateZoom(), ev.calculatePan())
                                 ev.changes.forEach { it.consume() }
@@ -131,10 +136,16 @@ internal fun Board(
                             }
                             val ch = pressed.first()
                             if ((ch.position - down.position).getDistance() > viewConfiguration.touchSlop) moved = true
-                            if (st.dragFrom != null) {
+                            if (grabPart != null && moved && st.moving == null && !multi) {
+                                st.startMove(grabPart.id, bp)
+                                buzz(HapticFeedbackType.LongPress)
+                            }
+                            if (st.moving != null) {
+                                st.moveTo(toBoard(ch.position).first)
+                            } else if (st.dragFrom != null) {
                                 val (p, s) = toBoard(ch.position)
                                 st.dragPos = p
-                                val hover = level.hitTerminal(p, terminalRadius(s) * 1.4f)?.takeIf { it != startTerm }
+                                val hover = st.view.hitTerminal(p, terminalRadius(s) * 1.4f)?.takeIf { it != startTerm }
                                 if (hover != st.dragHover) {
                                     st.dragHover = hover
                                     if (hover != null) buzz(HapticFeedbackType.TextHandleMove)
@@ -146,6 +157,10 @@ internal fun Board(
                             ch.consume()
                         }
                         val duration = (currentEvent.changes.firstOrNull()?.uptimeMillis ?: down.uptimeMillis) - down.uptimeMillis
+                        if (st.moving != null) {
+                            if (st.endMove()) onLayoutChanged(st.layout)
+                            return@awaitEachGesture
+                        }
                         val from = st.dragFrom
                         val to = st.dragHover
                         st.dragFrom = null; st.dragHover = null; st.dragPos = null
@@ -165,7 +180,7 @@ internal fun Board(
             val s = baseScale() * zoom
             val o = origin(s)
             val input = RenderInput(
-                level = level,
+                level = st.view,
                 wires = st.session.wires,
                 choices = st.session.choices,
                 controls = st.controls,
@@ -189,6 +204,8 @@ internal fun Board(
                 ghost = st.ghost ?: tutorialWire,
                 wireBorn = st.wireBorn,
                 lastToggle = st.lastToggle,
+                lifted = st.moving,
+                liftedValid = st.moveValid,
             )
             withTransform({
                 translate(o.x, o.y)
@@ -197,7 +214,7 @@ internal fun Board(
                 drawBoard(input, tm)
                 // Samouczek: dłoń pokazuje, jak przeciągnąć pierwszy przewód
                 if (tutorialWire != null) {
-                    val a = level.terminalPos(tutorialWire.a); val b = level.terminalPos(tutorialWire.b)
+                    val a = st.view.terminalPos(tutorialWire.a); val b = st.view.terminalPos(tutorialWire.b)
                     val k = ((time % 2.4f) / 1.8f).coerceIn(0f, 1f)
                     val eased = k * k * (3 - 2 * k)
                     val hand = a + (b - a) * eased
@@ -219,6 +236,7 @@ internal fun Board(
             ViewButton("−") { zoomAround(Offset(canvasSize.width / 2, canvasSize.height / 2), 1 / 1.35f) }
             ViewButton("⤢") { zoom = 1f; pan = Offset.Zero }
             ViewButton(if (view3d) "3D" else "2D", onToggle3d)
+            if (st.layout.isNotEmpty() && st.mode == Mode.BUILD) ViewButton("↺") { st.resetLayout(); onLayoutChanged(emptyMap()) }
         }
     }
 }

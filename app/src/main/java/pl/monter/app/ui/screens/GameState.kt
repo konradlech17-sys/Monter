@@ -84,6 +84,64 @@ class GameState(val level: Level, val difficulty: Difficulty) {
     var lastToggle by mutableFloatStateOf(-10f)
     var shakeAt by mutableFloatStateOf(-10f)
 
+    // Własny układ elementów (przestawianych palcem)
+    var layout by mutableStateOf<Map<String, Offset>>(emptyMap())
+    var moving by mutableStateOf<String?>(null)
+    var moveValid by mutableStateOf(true)
+    private var moveGrab = Offset.Zero
+    private var moveStart = Offset.Zero
+
+    /** Poziom z uwzględnieniem przestawionych elementów – do rysowania i trafiania palcem. */
+    val view: Level by derivedStateOf {
+        if (layout.isEmpty()) level
+        else level.copy(parts = level.parts.map { p -> layout[p.id]?.let { p.copy(x = it.x, y = it.y) } ?: p })
+    }
+
+    fun startMove(partId: String, at: Offset) {
+        val p = view.part(partId)
+        moving = partId
+        moveStart = Offset(p.x, p.y)
+        moveGrab = at - moveStart
+        moveValid = true
+        selected = null; selectedWire = null
+    }
+
+    fun moveTo(at: Offset) {
+        val id = moving ?: return
+        val p = level.part(id)
+        val raw = at - moveGrab
+        // Przyciąganie do siatki 10 jednostek i trzymanie w granicach płyty
+        val x = (Math.round(raw.x / 10f) * 10f).coerceIn(0f, level.width - p.kind.w)
+        val y = (Math.round(raw.y / 10f) * 10f).coerceIn(0f, level.height - p.kind.h)
+        layout = layout + (id to Offset(x, y))
+        moveValid = !overlaps(id)
+    }
+
+    /** Kończy przestawianie; zwraca true, jeśli układ się zmienił. */
+    fun endMove(): Boolean {
+        val id = moving ?: return false
+        moving = null
+        val now = layout[id]
+        if (!moveValid || now == null) {
+            layout = layout + (id to moveStart)
+            message = "Tu się nie zmieści – element wrócił na miejsce."
+            moveValid = true
+            return false
+        }
+        if (now == moveStart) return false
+        message = "📐 Przestawiono: ${level.part(id).label}"
+        return true
+    }
+
+    fun resetLayout() { layout = emptyMap(); message = "Przywrócono układ domyślny." }
+
+    private fun overlaps(id: String): Boolean {
+        val a = view.part(id)
+        return view.parts.any { b ->
+            b.id != id && a.x < b.x + b.kind.w - 4 && b.x < a.x + a.kind.w - 4 && a.y < b.y + b.kind.h - 4 && b.y < a.y + a.kind.h - 4
+        }
+    }
+
     val sim: SimResult? by derivedStateOf { if (mode == Mode.TEST) session.simulate(controls) else null }
 
     val highlightParts: Set<String> get() = focusIssue?.parts ?: if (showReport) report?.errors?.flatMap { it.parts }?.toSet().orEmpty() else emptySet()
@@ -149,7 +207,7 @@ class GameState(val level: Level, val difficulty: Difficulty) {
     /** Dotknięcie planszy w trybie montażu. */
     fun tapBuild(p: Offset, scale: Float, now: Float): Boolean {
         message = null
-        val term = level.hitTerminal(p, terminalRadius(scale))
+        val term = view.hitTerminal(p, terminalRadius(scale))
         if (term != null) {
             selectedWire = null
             val sel = selected
@@ -163,7 +221,14 @@ class GameState(val level: Level, val difficulty: Difficulty) {
             }
             return false
         }
-        val wire = level.hitWire(p, session.wires, maxOf(10f, 20f / scale))
+        // Przewody leżą pod aparatami – dotknięcie obudowy dotyczy aparatu.
+        view.hitPart(p)?.let { part ->
+            selected = null; selectedWire = null
+            if (part.options.isNotEmpty()) choosing = part
+            else message = "${part.label} – przeciągnij obudowę, aby przestawić."
+            return false
+        }
+        val wire = view.hitWire(p, session.wires, maxOf(10f, 20f / scale))
         if (wire != null) {
             if (scissors) cut(wire) else {
                 selectedWire = if (selectedWire == wire.id) null else wire.id
@@ -172,7 +237,7 @@ class GameState(val level: Level, val difficulty: Difficulty) {
             }
             return false
         }
-        val part = level.hitPart(p)
+        val part = view.hitPart(p)
         selected = null; selectedWire = null
         if (part != null && part.options.isNotEmpty()) choosing = part
         return false
@@ -180,7 +245,7 @@ class GameState(val level: Level, val difficulty: Difficulty) {
 
     /** Przytrzymanie palca na przewodzie – usunięcie. */
     fun longPress(p: Offset, scale: Float): Boolean {
-        val wire = level.hitWire(p, session.wires, maxOf(10f, 20f / scale)) ?: return false
+        val wire = view.hitWire(p, session.wires, maxOf(10f, 20f / scale)) ?: return false
         cut(wire)
         return true
     }
@@ -218,7 +283,7 @@ class GameState(val level: Level, val difficulty: Difficulty) {
      */
     fun tapTest(p: Offset, now: Float): Boolean {
         message = null
-        val part = level.hitPart(p) ?: return false
+        val part = view.hitPart(p) ?: return false
         if (part.options.isNotEmpty() && part.kind.states == 0) { choosing = part; return false }
         if (part.kind.states == 0) return false
         val before = sim
@@ -248,7 +313,7 @@ class GameState(val level: Level, val difficulty: Difficulty) {
     }
 
     private fun burst(partIds: List<String>, now: Float) {
-        sparks = (sparks + partIds.map { id -> val d = level.part(id); SparkBurst(Offset(d.x + d.kind.w / 2, d.y + d.kind.h / 2), now) }).takeLast(6)
+        sparks = (sparks + partIds.map { id -> val d = view.part(id); SparkBurst(Offset(d.x + d.kind.w / 2, d.y + d.kind.h / 2), now) }).takeLast(6)
         shakeAt = now
     }
 
