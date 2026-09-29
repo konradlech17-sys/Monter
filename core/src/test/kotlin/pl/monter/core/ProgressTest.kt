@@ -96,3 +96,30 @@ class ProgressTest {
         assertFalse(Safety.isNext(0, Safety.decoys[0]))
     }
 }
+
+class LayoutAndContactorTest {
+    @kotlin.test.Test
+    fun `layout survives json and merge`() {
+        val s = SaveData(layouts = mapOf("1-3" to mapOf("sw" to pl.monter.core.game.Pos(100f, 200f))), updatedAt = 2)
+        kotlin.test.assertEquals(s, SaveData.fromJson(s.toJson()))
+        val m = SaveData.merge(s, SaveData(updatedAt = 5))
+        kotlin.test.assertEquals(100f, m.layouts["1-3"]?.get("sw")?.x)
+    }
+
+    @kotlin.test.Test
+    fun `contactor closes only with coil powered`() {
+        val s = Solutions.all.getValue("7-1")
+        kotlin.test.assertFalse(s.simulate(mapOf("sw" to 0)).loads.getValue("lamp").on)
+        val on = s.simulate(mapOf("sw" to 1))
+        kotlin.test.assertTrue(on.loads.getValue("lamp").on)
+        kotlin.test.assertTrue(on.loads.getValue("k").on)
+    }
+
+    @kotlin.test.Test
+    fun `chapter 7 opens after chapter 5, not after service`() {
+        kotlin.test.assertEquals(5, pl.monter.core.level.Levels.previousChapter(7))
+        kotlin.test.assertEquals(7, pl.monter.core.level.Levels.previousChapter(8))
+        kotlin.test.assertEquals(null, pl.monter.core.level.Levels.previousChapter(1))
+        println("Liczba poziomów: " + pl.monter.core.level.Levels.all.size)
+    }
+}

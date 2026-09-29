@@ -133,7 +133,11 @@ class Validator(private val level: Level, wires: List<Wire>, private val choices
             val st = when (p.kind) {
                 Kind.SWITCH_STAIR, Kind.SWITCH_CROSS -> "poz. ${s + 1}"
                 Kind.SWITCH_2 -> listOf(if (s and 1 != 0) "1:wł" else "1:wył", if (s and 2 != 0) "2:wł" else "2:wył").joinToString("/")
-                Kind.MOTION_SENSOR -> if (s == 1) "ruch" else "brak ruchu"
+                Kind.MOTION_SENSOR -> when {
+                    p.label.contains("Zegar") -> if (s == 1) "tania taryfa" else "droga taryfa"
+                    p.label.contains("zmierzch", ignoreCase = true) -> if (s == 1) "ciemno" else "jasno"
+                    else -> if (s == 1) "ruch" else "brak ruchu"
+                }
                 Kind.BUTTON -> if (s == 1) "wciśnięty" else "puszczony"
                 else -> if (s == 1) "wł." else "wył."
             }
@@ -349,7 +353,7 @@ class Validator(private val level: Level, wires: List<Wire>, private val choices
     // ------------------------------------------------------------------ zabezpieczenia
 
     private fun phaseTerms(p: Part): List<String> = when (p.kind) {
-        Kind.CIRCUIT_3P, Kind.SOCKET_400, Kind.SPD_4P, Kind.MOTOR -> listOf("L1", "L2", "L3")
+        Kind.CIRCUIT_3P, Kind.SOCKET_400, Kind.SPD_4P, Kind.MOTOR, Kind.WALLBOX -> listOf("L1", "L2", "L3")
         else -> listOf("L")
     }
 

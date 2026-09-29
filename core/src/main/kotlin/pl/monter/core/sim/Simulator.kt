@@ -143,8 +143,9 @@ class Simulator(
 
     /** Czy element aktywny (transformator, czujnik) ma napięcie 230 V między L i N. */
     private fun mainsPowered(s: Solved, p: Part): Boolean {
-        val l = s.pots(TermRef(p.id, "L")); val n = s.pots(TermRef(p.id, "N"))
-        if (p.kind == Kind.TRANSFORMER) {
+        val coil = p.kind == Kind.CONTACTOR
+        val l = s.pots(TermRef(p.id, if (coil) "A1" else "L")); val n = s.pots(TermRef(p.id, if (coil) "A2" else "N"))
+        if (p.kind == Kind.TRANSFORMER || coil) {
             return (l.any { it.isPhase } && Potential.N in n) || (n.any { it.isPhase } && Potential.N in l)
         }
         return l.any { it.isPhase } && Potential.N in n
@@ -153,7 +154,9 @@ class Simulator(
     private fun links(
         p: Part, s: Int, open: Set<String>, active: Set<String>, cut: Set<Pair<String, String>>,
     ): List<Pair<String, String>> = when (p.kind) {
-        Kind.SWITCH_1 -> if (s == 1) listOf("L" to "P") else emptyList()
+        Kind.SWITCH_1, Kind.DIMMER -> if (s == 1) listOf("L" to "P") else emptyList()
+        // Stycznik: cewka A1–A2 pod napięciem zamyka styki główne.
+        Kind.CONTACTOR -> if (p.id in active) p.kind.poles else emptyList()
         Kind.SWITCH_2 -> buildList {
             if (s and 1 != 0) add("L" to "P1")
             if (s and 2 != 0) add("L" to "P2")
@@ -216,8 +219,9 @@ class Simulator(
 
     /** Odbiorniki, przez które płynie prąd (do analizy wyłączników RCD). */
     private fun currentPaths(p: Part): Pair<List<String>, List<String>>? = when (p.kind) {
-        Kind.LAMP, Kind.FAN, Kind.SOCKET, Kind.CIRCUIT_1P, Kind.MOTION_SENSOR, Kind.TRANSFORMER -> listOf("L", "N") to listOf("L", "N")
-        Kind.SOCKET_400, Kind.CIRCUIT_3P -> listOf("L1", "L2", "L3", "N") to listOf("L1", "L2", "L3", "N")
+        Kind.LAMP, Kind.FAN, Kind.BOILER, Kind.SOCKET, Kind.CIRCUIT_1P, Kind.MOTION_SENSOR, Kind.TRANSFORMER -> listOf("L", "N") to listOf("L", "N")
+        Kind.CONTACTOR -> listOf("A1", "A2") to listOf("A1", "A2")
+        Kind.SOCKET_400, Kind.CIRCUIT_3P, Kind.WALLBOX -> listOf("L1", "L2", "L3", "N") to listOf("L1", "L2", "L3", "N")
         else -> null
     }
 
@@ -275,7 +279,7 @@ class Simulator(
     private fun evaluate(p: Part, s: Solved): LoadStatus? {
         fun pots(id: String) = s.pots(TermRef(p.id, id))
         return when (p.kind) {
-            Kind.LAMP, Kind.SOCKET, Kind.CIRCUIT_1P -> singlePhase(pots("L"), pots("N"), pots("PE"))
+            Kind.LAMP, Kind.SOCKET, Kind.CIRCUIT_1P, Kind.BOILER -> singlePhase(pots("L"), pots("N"), pots("PE"))
             // Wentylator ma II klasę ochronności (podwójna izolacja) – nie ma zacisku PE.
             Kind.FAN -> singlePhase(pots("L"), pots("N"), setOf(Potential.PE))
             Kind.MOTOR -> {
@@ -287,22 +291,22 @@ class Simulator(
                 val l = pots("L"); val n = pots("N"); val pe = pots("PE")
                 if (l.any { it.isPhase } && Potential.N in n && Potential.PE in pe) LoadStatus(LoadState.ON) else LoadStatus(LoadState.OFF)
             }
-            Kind.SOCKET_400, Kind.CIRCUIT_3P -> threePhase(listOf(pots("L1"), pots("L2"), pots("L3")), pots("N"), pots("PE"))
+            Kind.SOCKET_400, Kind.CIRCUIT_3P, Kind.WALLBOX -> threePhase(listOf(pots("L1"), pots("L2"), pots("L3")), pots("N"), pots("PE"))
             Kind.SPD_4P -> {
                 val tp = threePhase(listOf(pots("L1"), pots("L2"), pots("L3")), pots("N"), pots("PE"))
                 if (tp.on && tp.notes.none { it == Note.NO_PE || it == Note.NO_N }) LoadStatus(LoadState.ON) else LoadStatus(LoadState.OFF)
             }
-            Kind.BELL -> {
+            Kind.BELL, Kind.STRIKE -> {
                 val a = pots("A"); val b = pots("B")
                 when {
                     (a.any { it.isPhase } && (b.any { it.isPhase || it == Potential.N })) ||
                         (b.any { it.isPhase } && Potential.N in a) ->
-                        LoadStatus(LoadState.DAMAGED, message = "Dzwonek 8 V podłączony do 230 V – spalony!")
+                        LoadStatus(LoadState.DAMAGED, message = "${p.label} (obwód SELV) podłączony do 230 V – spalony!")
                     (Potential.LV_A in a && Potential.LV_B in b) || (Potential.LV_B in a && Potential.LV_A in b) -> LoadStatus(LoadState.ON)
                     else -> LoadStatus(LoadState.OFF)
                 }
             }
-            Kind.TRANSFORMER, Kind.MOTION_SENSOR ->
+            Kind.TRANSFORMER, Kind.MOTION_SENSOR, Kind.CONTACTOR ->
                 if (p.id in s.activeParts) LoadStatus(LoadState.ON) else LoadStatus(LoadState.OFF)
             else -> null
         }

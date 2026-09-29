@@ -10,6 +10,10 @@ import kotlin.math.roundToInt
 @Serializable
 data class LevelResult(val stars: Int, val bestTimeSec: Int? = null, val completions: Int = 1)
 
+/** Pozycja elementu przestawionego przez gracza. */
+@Serializable
+data class Pos(val x: Float, val y: Float)
+
 @Serializable
 data class Stats(
     val checks: Int = 0,
@@ -37,6 +41,8 @@ data class SaveData(
     val seenIntro: Set<String> = emptySet(),
     /** Ustawienia: widok 3D planszy, wibracje. */
     val view3d: Boolean = true,
+    /** Własny układ elementów na planszy: id poziomu → (id elementu → pozycja). */
+    val layouts: Map<String, Map<String, Pos>> = emptyMap(),
     val haptics: Boolean = true,
     val updatedAt: Long = 0,
 ) {
@@ -56,8 +62,8 @@ data class SaveData(
         val inChapter = Levels.inChapter(level.chapter).filter { it.unlockCost == null }
         val idx = inChapter.indexOf(level)
         if (idx > 0) return completed(inChapter[idx - 1])
-        if (level.chapter == 1) return true
-        val prev = Levels.inChapter(level.chapter - 1).filter { it.unlockCost == null }
+        val prevChapter = Levels.previousChapter(level.chapter) ?: return true
+        val prev = Levels.inChapter(prevChapter).filter { it.unlockCost == null }
         return prev.count { completed(it) } >= minOf(Levels.CHAPTER_GATE, prev.size)
     }
 
@@ -93,6 +99,7 @@ data class SaveData(
                 owned = a.owned + b.owned,
                 achievements = a.achievements + b.achievements,
                 seenIntro = a.seenIntro + b.seenIntro,
+                layouts = (if (newer === a) b.layouts + a.layouts else a.layouts + b.layouts),
                 totalEarned = maxOf(a.totalEarned, b.totalEarned),
                 stats = Stats(
                     checks = maxOf(a.stats.checks, b.stats.checks),

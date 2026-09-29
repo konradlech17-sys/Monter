@@ -123,3 +123,12 @@ internal fun fault(
         hints = listOf(hint),
     )
 }
+
+/** Cel dla łącznika świecznikowego: każdy klawisz steruje innym odbiornikiem (dowolne przypisanie). */
+internal fun twoKeys(sw: String, a: String, b: String) = Goal.OneOf(
+    listOf(
+        listOf(Goal.Follows(a, "klawisz 1 → pierwszy odbiornik") { it.bit(sw, 0) }, Goal.Follows(b, "klawisz 2 → drugi odbiornik") { it.bit(sw, 1) }),
+        listOf(Goal.Follows(a, "klawisz 2 → pierwszy odbiornik") { it.bit(sw, 1) }, Goal.Follows(b, "klawisz 1 → drugi odbiornik") { it.bit(sw, 0) }),
+    ),
+)
+

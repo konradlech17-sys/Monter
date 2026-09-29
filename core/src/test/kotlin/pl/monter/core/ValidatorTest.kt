@@ -23,7 +23,7 @@ class ValidatorTest {
 
     @Test
     fun `every level has a reference solution that passes on HARD without warnings`() {
-        assertTrue(Levels.all.size >= 35, "Poziomów: ${Levels.all.size}")
+        assertTrue(Levels.all.size >= 58, "Poziomów: ${Levels.all.size}")
         assertEquals(Levels.all.size, Levels.all.map { it.id }.toSet().size, "Zdublowane id poziomów")
         for ((id, s) in Solutions.all) {
             val r = s.check(Difficulty.HARD)
@@ -42,7 +42,7 @@ class ValidatorTest {
     @Test
     fun `service levels start broken and explain the fault`() {
         val service = Levels.all.filter { it.story != null }
-        assertEquals(8, service.size)
+        assertTrue(service.size >= 14, "Serwis: ${service.size}")
         for (level in service) {
             val r = BuildSession(level).check(Difficulty.EASY)
             assertTrue(r.errors.isNotEmpty(), level.id)

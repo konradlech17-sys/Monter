@@ -13,8 +13,20 @@ object Levels {
         Chapter(3, "Sygnalizacja i automatyka", "Dzwonki, transformator SELV, czujniki ruchu i zmierzchu.", "🔔"),
         Chapter(4, "Rozdzielnice 230 V", "Rozłącznik, RCD, wyłączniki nadprądowe, szyny, ochrona przepięciowa.", "🗄️"),
         Chapter(5, "Trójfaza 400 V", "Gniazda siłowe, silniki, płyta indukcyjna i pełna rozdzielnica domowa.", "⚙️"),
+        Chapter(7, "Styczniki i sterowanie", "Obwód sterowania i obwód główny: bojler, silniki, hala, ładowarka EV.", "🧲"),
+        Chapter(8, "Projekty: mieszkanie od A do Z", "Kompletne pomieszczenia i mieszkanie – od rozdzielnicy do gniazdka.", "🏗️"),
         Chapter(6, "Serwis – znajdź usterkę", "Poprawiasz instalacje po „fachowcach\". Słuchaj objawów zgłoszonych przez klienta!", "🛠️"),
     )
+
+    /** Rozdział serwisowy nie blokuje kolejnych – jego poziomy otwierają się razem z poziomami bazowymi. */
+    const val SERVICE_CHAPTER = 6
+
+    /** Rozdział, którego ukończenie (częściowe) otwiera [chapter]; null = rozdział otwarty od początku. */
+    fun previousChapter(chapter: Int): Int? {
+        val order = chapters.map { it.number }.filter { it != SERVICE_CHAPTER }
+        val i = order.indexOf(chapter)
+        return if (i <= 0) null else order[i - 1]
+    }
 
     /** Ile poziomów poprzedniego rozdziału trzeba ukończyć, by otworzyć następny. */
     const val CHAPTER_GATE = 3
@@ -426,19 +438,12 @@ object Levels {
         hint("Jak czujnik ruchu – tylko do wyjścia L′ podłącz dwie lampy równolegle.")
     }
 
-    private fun twoKeys(sw: String, a: String, b: String) = Goal.OneOf(
-        listOf(
-            listOf(Goal.Follows(a, "klawisz 1 → pierwszy odbiornik") { it.bit(sw, 0) }, Goal.Follows(b, "klawisz 2 → drugi odbiornik") { it.bit(sw, 1) }),
-            listOf(Goal.Follows(a, "klawisz 2 → pierwszy odbiornik") { it.bit(sw, 1) }, Goal.Follows(b, "klawisz 1 → drugi odbiornik") { it.bit(sw, 0) }),
-        ),
-    )
-
     val all: List<Level> by lazy {
         val base = listOf(
             bulb, socket, lampSwitch, twoSockets, threeSockets, twoLamps, room,
-            chandelier, stairs, cross, fourPlaces, bathroom, stairsTwoLamps, hallway,
-            bell, twoButtons, pir, pirOverride, dusk,
-        ) + Boards.chapter4 + Boards.chapter5
+            chandelier, stairs, cross, fourPlaces, bathroom, stairsTwoLamps, hallway, Advanced.dimmer,
+            bell, twoButtons, pir, pirOverride, dusk, Advanced.intercom,
+        ) + Boards.chapter4 + Boards.chapter5 + Advanced.chapter7 + Advanced.chapter8
         base + Service.levels(base.associateBy { it.id })
     }
 

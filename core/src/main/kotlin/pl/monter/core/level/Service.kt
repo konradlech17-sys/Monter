@@ -63,5 +63,41 @@ internal object Service {
             why = "Przewody N i PE w układzie TN-S nie mogą się łączyć za rozdzielnicą. Sprawdź, skąd wychodzą przewody obwodu łazienki.",
             hint = "PE łazienki podłączono do szyny N zamiast do szyny PE.",
         ) { replace("pebar.7", "c5.PE", "nbar.8", "c5.PE") },
+        fault(
+            base.getValue("1-6"), "6-9", 9, "Druga lampa nie świeci",
+            story = "Klient: „W salonie świeci tylko jedna lampa. Żarówkę w drugiej wymieniłem – nic.\"",
+            why = "Żarówka jest dobra. Czego brakuje drugiej lampie, żeby prąd mógł przez nią popłynąć?",
+            hint = "Druga lampa nie ma podłączonego przewodu N.",
+        ) { remove("wn.3", "l2.N") },
+        fault(
+            base.getValue("2-1"), "6-10", 10, "Żyrandol: jedna grupa martwa",
+            story = "Klient: „Drugi klawisz zapala te same żarówki co pierwszy, a druga grupa nigdy się nie świeci.\"",
+            why = "Sprawdź, dokąd biegną przewody z wyjść ↑1 i ↑2 łącznika.",
+            hint = "Oba wyjścia łącznika podłączono do tej samej grupy żarówek.",
+        ) { replace("sw.P2", "lb.L", "sw.P2", "la.L") },
+        fault(
+            base.getValue("3-3"), "6-11", 11, "Czujnik ruchu nie reaguje",
+            story = "Klient: „Czujnik ruchu w garażu w ogóle nie włącza światła, nawet w nocy.\"",
+            why = "Czujnik ma własną elektronikę. Czego potrzebuje, żeby w ogóle działać?",
+            hint = "Czujnik nie ma podłączonego N – jego elektronika nie jest zasilana.",
+        ) { remove("wn.2", "pir.N") },
+        fault(
+            base.getValue("4-3"), "6-12", 12, "Wybijają oba RCD",
+            story = "Klient: „Po podłączeniu nowej łazienki przy każdym włączeniu światła wybijają OBA wyłączniki różnicowoprądowe.\"",
+            why = "Faza obwodu łazienki idzie przez RCD 2. A przez który RCD wraca jej przewód N?",
+            hint = "N łazienki podpięto do szyny N pierwszego RCD.",
+        ) { replace("nbar2.2", "c3.N", "nbar1.4", "c3.N") },
+        fault(
+            base.getValue("5-3"), "6-13", 13, "Płyta indukcyjna „mrowi\"",
+            story = "Klient: „Przy dotknięciu metalowej ramki płyty czuję mrowienie.\"",
+            why = "Metalowa obudowa odbiornika I klasy musi być połączona z…?",
+            hint = "Brak przewodu PE do płyty indukcyjnej.",
+        ) { remove("pebar.2", "c.PE") },
+        fault(
+            base.getValue("7-3"), "6-14", 14, "Silnik nie rusza",
+            story = "Klient: „Łącznik klika, ale wentylator na hali stoi. Stycznik nawet nie drgnie.\"",
+            why = "Cewka stycznika potrzebuje 230 V między A1 i A2. Dokąd podłączono A2?",
+            hint = "Zacisk A2 cewki podłączono do PE zamiast do N.",
+        ) { replace("k.A2", "sup.N", "k.A2", "sup.PE") },
     )
 }

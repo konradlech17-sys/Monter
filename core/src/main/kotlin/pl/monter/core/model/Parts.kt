@@ -70,6 +70,32 @@ enum class Kind(
             t("PE", "PE", 128, 106, Role.PE),
         ),
     ),
+    BOILER(
+        "Podgrzewacz wody", 110f, 130f, Category.LOAD,
+        listOf(t("L", "L", 25, 116, Role.L), t("N", "N", 55, 116, Role.N), t("PE", "PE", 85, 116, Role.PE)),
+    ),
+    WALLBOX(
+        "Ładowarka EV", 150f, 130f, Category.LOAD,
+        listOf(
+            t("L1", "L1", 20, 116, Role.L1), t("L2", "L2", 47, 116, Role.L2), t("L3", "L3", 74, 116, Role.L3),
+            t("N", "N", 101, 116, Role.N), t("PE", "PE", 128, 116, Role.PE),
+        ),
+    ),
+    STRIKE(
+        "Elektrozaczep 12 V", 90f, 100f, Category.LOAD,
+        listOf(t("A", "~", 25, 88, Role.LV), t("B", "~", 65, 88, Role.LV)),
+    ),
+    DIMMER(
+        "Ściemniacz", 90f, 100f, Category.CONTROL,
+        listOf(t("L", "L", 25, 88, Role.L), t("P", "↑", 65, 88, Role.SWITCHED)), states = 2,
+    ),
+    CONTACTOR(
+        "Stycznik 3P", 120f, 120f, Category.ACTIVE,
+        listOf(
+            t("A1", "A1", 14, 10, Role.SWITCHED), t("1", "1", 44, 10, Role.L1), t("3", "3", 74, 10, Role.L2), t("5", "5", 104, 10, Role.L3),
+            t("A2", "A2", 14, 110, Role.N), t("2", "2", 44, 110, Role.L1), t("4", "4", 74, 110, Role.L2), t("6", "6", 104, 110, Role.L3),
+        ),
+    ),
     SWITCH_1(
         "Łącznik jednobiegunowy", 90f, 100f, Category.CONTROL,
         listOf(t("L", "L", 25, 88, Role.L), t("P", "↑", 65, 88, Role.SWITCHED)), states = 2,
@@ -190,7 +216,7 @@ enum class Kind(
             MAIN_SWITCH_2P, RCD_2P -> listOf("1" to "2", "N" to "N'")
             MAIN_SWITCH_4P, RCD_4P -> listOf("1" to "2", "3" to "4", "5" to "6", "N" to "N'")
             MCB_1P -> listOf("1" to "2")
-            MCB_3P -> listOf("1" to "2", "3" to "4", "5" to "6")
+            MCB_3P, CONTACTOR -> listOf("1" to "2", "3" to "4", "5" to "6")
             else -> emptyList()
         }
 }
