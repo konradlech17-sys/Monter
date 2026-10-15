@@ -177,6 +177,23 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         return true
     }
 
+    /** Odpowiedź w nauce do SEP; zwraca true przy poprawnej. */
+    fun sepAnswer(q: pl.monter.core.exam.Question, chosen: Int): Boolean {
+        val out = pl.monter.core.game.SepRewards.answer(_save.value, q, chosen, System.currentTimeMillis())
+        update(out.save)
+        announce(out.newAchievements)
+        return chosen == q.correct
+    }
+
+    /** Zakończony egzamin próbny SEP: wynik i liczba zdobytych iskier. */
+    fun sepExam(questions: List<pl.monter.core.exam.Question>, answers: List<Int?>): Pair<pl.monter.core.exam.ExamResult, Int> {
+        val (out, result) = pl.monter.core.game.SepRewards.exam(_save.value, questions, answers, System.currentTimeMillis())
+        update(out.save)
+        announce(out.newAchievements)
+        pgs?.submitScore(out.save.totalEarned.toLong())
+        return result to out.sparks
+    }
+
     fun showPlayAchievements() {
         val service = pgs ?: return
         viewModelScope.launch { service.showAchievements() }

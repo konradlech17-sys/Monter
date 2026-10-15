@@ -29,7 +29,11 @@ import pl.monter.app.ui.screens.AchievementsScreen
 import pl.monter.app.ui.screens.GameScreen
 import pl.monter.app.ui.screens.HomeScreen
 import pl.monter.app.ui.screens.LevelMapScreen
+import pl.monter.app.ui.screens.SepHomeScreen
+import pl.monter.app.ui.screens.SepMode
+import pl.monter.app.ui.screens.SepSessionScreen
 import pl.monter.app.ui.screens.ShopScreen
+import pl.monter.core.exam.SepCategory
 import pl.monter.app.ui.theme.Palette
 import pl.monter.core.game.Difficulty
 import pl.monter.core.level.Levels
@@ -39,6 +43,8 @@ sealed interface Screen {
     data object Map : Screen
     data object Shop : Screen
     data object Achievements : Screen
+    data object Sep : Screen
+    data class SepSession(val mode: SepMode, val category: SepCategory?, val nonce: Long = System.nanoTime()) : Screen
     data class Game(val levelId: String, val difficulty: Difficulty, val nonce: Long = System.nanoTime()) : Screen
 }
 
@@ -76,6 +82,7 @@ fun MonterRoot(vm: AppViewModel) {
                     onPlay = { push(Screen.Map) },
                     onShop = { push(Screen.Shop) },
                     onAchievements = { push(Screen.Achievements) },
+                    onSep = { push(Screen.Sep) },
                     onSignIn = vm::signIn,
                 )
                 Screen.Map -> LevelMapScreen(
@@ -87,6 +94,12 @@ fun MonterRoot(vm: AppViewModel) {
                     onBuyLevel = { vm.buy("level_${it.id}") },
                 )
                 Screen.Shop -> ShopScreen(save = save, vm = vm, onBack = ::pop)
+                Screen.Sep -> SepHomeScreen(save, onBack = ::pop, onStart = { mode, cat -> push(Screen.SepSession(mode, cat)) })
+                is Screen.SepSession -> SepSessionScreen(
+                    screen.mode, screen.category, save, vm,
+                    onExit = ::pop,
+                    onAgain = { replaceTop(Screen.SepSession(screen.mode, screen.category)) },
+                )
                 Screen.Achievements -> AchievementsScreen(save = save, signedIn = cloud.signedIn, onPlayGames = vm::showPlayAchievements, onBack = ::pop)
                 is Screen.Game -> {
                     val level = Levels.byId(screen.levelId)!!

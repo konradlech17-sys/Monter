@@ -34,6 +34,15 @@ i sprawdza go według zasad z polskich norm (PN-HD 60364, PN-EN 60445, PN-EN 501
 - **Chmura**: logowanie przez Google Play Gry + zapis postępów (Saved Games), osiągnięcia i ranking.
   Bez logowania gra działa offline z zapisem lokalnym.
 
+### 📚 Przygotowanie do egzaminu SEP (G1, E, do 1 kV)
+- **87 pytań** w 5 działach: przepisy i organizacja pracy, ochrona przeciwporażeniowa, pomiary, instalacje i zabezpieczenia,
+  pierwsza pomoc i ppoż. – każde z wyjaśnieniem i źródłem (norma / przepis).
+- **9 typów zadań obliczeniowych generowanych losowo**: impedancja pętli zwarcia (Zs ≤ U0/Ia), ocena pomiaru Zs, prąd Ia,
+  rezystancja izolacji, czasy zadziałania RCD, prąd odbiornika 1F i 3F, przekrój PE, kod IP.
+- **Tryby**: nauka (metoda Leitnera – trudne pytania wracają częściej), zadania obliczeniowe, powtórka błędów,
+  egzamin próbny (30 pytań, 30 min, próg 80%).
+- Iskry i osiągnięcia za naukę. Pytania nie są oficjalnymi pytaniami komisji – to trening tej samej wiedzy.
+
 ### Co sprawdza walidator (z wyjaśnieniem „dlaczego")
 kolory żył (PE wyłącznie zielono-żółty, N niebieski, fazy brąz/czerń/szary, L1-L2-L3 w rozdzielnicy 3F) •
 przekrój vs prąd zabezpieczenia (B10→1,5 mm², B16→2,5 mm², wkładka 25 A→4 mm²…) • N i PE nie cieńsze od fazy •

@@ -43,6 +43,8 @@ data class SaveData(
     val view3d: Boolean = true,
     /** Własny układ elementów na planszy: id poziomu → (id elementu → pozycja). */
     val layouts: Map<String, Map<String, Pos>> = emptyMap(),
+    /** Postępy przygotowań do egzaminu SEP. */
+    val sep: pl.monter.core.exam.SepProgress = pl.monter.core.exam.SepProgress(),
     val haptics: Boolean = true,
     val updatedAt: Long = 0,
 ) {
@@ -99,6 +101,7 @@ data class SaveData(
                 owned = a.owned + b.owned,
                 achievements = a.achievements + b.achievements,
                 seenIntro = a.seenIntro + b.seenIntro,
+                sep = a.sep.merge(b.sep),
                 layouts = (if (newer === a) b.layouts + a.layouts else a.layouts + b.layouts),
                 totalEarned = maxOf(a.totalEarned, b.totalEarned),
                 stats = Stats(

@@ -24,6 +24,10 @@ object Achievements {
         Achievement("chapter7", "Automatyk przemysłowy", "Ukończ rozdział 7 – styczniki.", "🧲"),
         Achievement("chapter8", "Wykonawca", "Ukończ rozdział 8 – projekty mieszkań.", "🏗️"),
         Achievement("architect", "Architekt rozdzielnic", "Przestaw aparaty na planszy po swojemu.", "📐"),
+        Achievement("sep_ready", "Gotowy na SEP", "Zalicz egzamin próbny SEP (≥ ${pl.monter.core.exam.SepTrainer.PASS_PERCENT}%).", "📜"),
+        Achievement("sep_ace", "Prymus", "Zdobądź co najmniej 95% na egzaminie próbnym SEP.", "🏅"),
+        Achievement("measurer", "Pomiarowiec", "Rozwiąż poprawnie 30 zadań obliczeniowych SEP.", "📟"),
+        Achievement("sep_master", "Encyklopedia elektryka", "Opanuj 80% materiału SEP (system powtórek).", "🧠"),
         Achievement("master", "Mistrz rozdzielnic", "Ukończ rozdzielnicę domową 400 V na poziomie Mistrz.", "👑"),
         Achievement("collector", "Kolekcjoner", "Dokonaj 3 zakupów w sklepie.", "🛒"),
         Achievement("rich", "Iskrowy milioner", "Zdobądź łącznie 5000 iskier.", "💰"),
@@ -47,6 +51,10 @@ object Achievements {
         if (save.stats.purchases >= 3) earned += "collector"
         if (save.layouts.values.any { it.isNotEmpty() }) earned += "architect"
         if (save.totalEarned >= 5000) earned += "rich"
+        if (save.sep.examsPassed > 0) earned += "sep_ready"
+        if (save.sep.bestExamPercent >= 95) earned += "sep_ace"
+        if (save.sep.calcCorrect >= 30) earned += "measurer"
+        if (save.sep.overallMastery() >= 80) earned += "sep_master"
         if (Levels.campaign.all { save.bestStars(it) == 3 }) earned += "perfectionist"
         return (earned - save.achievements).map { byId(it) }
     }

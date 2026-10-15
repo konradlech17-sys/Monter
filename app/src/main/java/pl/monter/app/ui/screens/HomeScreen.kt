@@ -52,6 +52,7 @@ fun HomeScreen(
     onShop: () -> Unit,
     onAchievements: () -> Unit,
     onSignIn: () -> Unit,
+    onSep: () -> Unit = {},
 ) {
     Box(Modifier.fillMaxSize()) {
         AnimatedWires(Modifier.fillMaxSize())
@@ -71,6 +72,8 @@ fun HomeScreen(
                     GameButton("🛒 Sklep", onShop, color = Palette.Cyan, textColor = Color(0xFF00202E))
                     GameButton("🏆 Osiągnięcia", onAchievements, color = Palette.SurfaceHi, textColor = Palette.Text)
                 }
+                Spacer(Modifier.height(12.dp))
+                GameButton("📚 Egzamin SEP – nauka i testy (opanowane ${save.sep.overallMastery()}%)", onSep, color = Color(0xFF7E57C2), textColor = Color.White)
                 Spacer(Modifier.height(20.dp))
                 val done = Levels.all.count { save.completed(it) }
                 val stars = Levels.all.sumOf { save.bestStars(it) }
