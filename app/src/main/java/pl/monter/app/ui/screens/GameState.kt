@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import pl.monter.app.audio.Sound
 import pl.monter.app.ui.board.SparkBurst
 import pl.monter.app.ui.board.hitPart
 import pl.monter.app.ui.board.hitTerminal
@@ -82,6 +83,9 @@ class GameState(val level: Level, val difficulty: Difficulty) {
     var sparks by mutableStateOf<List<SparkBurst>>(emptyList())
     var wireBorn by mutableStateOf<Map<Int, Float>>(emptyMap())
     var lastToggle by mutableFloatStateOf(-10f)
+
+    /** Efekty dźwiękowe – podpina je ekran gry (wyłączone w ustawieniach = nic się nie dzieje). */
+    var onSound: (Sound) -> Unit = {}
     var shakeAt by mutableFloatStateOf(-10f)
 
     // Własny układ elementów (przestawianych palcem)
@@ -200,6 +204,7 @@ class GameState(val level: Level, val difficulty: Difficulty) {
         commit(session.connect(a, b, c, s))
         wireBorn = (wireBorn + (id to now)).filterValues { now - it < 3f }
         message = "✔ ${session.label(a)} ↔ ${session.label(b)} • ${c.pl}, ${s.label}"
+        onSound(Sound.WIRE)
         if (ghost != null && ghost!!.same(a, b)) ghost = null
         return true
     }
@@ -253,6 +258,7 @@ class GameState(val level: Level, val difficulty: Difficulty) {
     private fun cut(wire: Wire) {
         if (wire.fixed) { message = "To przewód fabryczny – zostaje."; return }
         commit(session.remove(wire.id))
+        onSound(Sound.SNIP)
         if (selectedWire == wire.id) selectedWire = null
         message = "✂️ Usunięto przewód (${wire.color.pl}). Cofnij: ↶"
     }
@@ -297,6 +303,7 @@ class GameState(val level: Level, val difficulty: Difficulty) {
         if (wasTripped) message = "${part.label} zadziałał – załączam ponownie…"
         controls = controls + (part.id to next)
         lastToggle = now
+        onSound(Sound.SWITCH)
         val after = sim ?: return false
         val newTrips = after.trips.filter { t -> before?.trips?.none { it.part == t.part } ?: true }
         if (newTrips.isNotEmpty()) {
@@ -304,15 +311,22 @@ class GameState(val level: Level, val difficulty: Difficulty) {
             message = newTrips.joinToString("\n") { "💥 ${it.reason}: zadziałał ${level.part(it.part).label}" }
             return true
         }
+        val bellStarted = after.loads.any { (id, l) ->
+            l.state == LoadState.ON && level.part(id).kind == Kind.BELL && before?.loads?.get(id)?.state != LoadState.ON
+        }
+        if (bellStarted) onSound(Sound.BELL)
         val damaged = after.loads.filter { it.value.state == LoadState.DAMAGED }
         if (damaged.isNotEmpty()) {
             shakeAt = now
+            onSound(Sound.BUZZ)
             message = damaged.values.mapNotNull { it.message }.distinct().joinToString("\n")
         }
         return false
     }
 
     private fun burst(partIds: List<String>, now: Float) {
+        onSound(Sound.SHORT)
+        onSound(Sound.TRIP)
         sparks = (sparks + partIds.map { id -> val d = view.part(id); SparkBurst(Offset(d.x + d.kind.w / 2, d.y + d.kind.h / 2), now) }).takeLast(6)
         shakeAt = now
     }

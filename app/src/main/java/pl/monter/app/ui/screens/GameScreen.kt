@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import pl.monter.app.audio.Sound
 import pl.monter.app.ui.AppViewModel
 import pl.monter.app.ui.board.BoardTheme
 import pl.monter.app.ui.board.ui
@@ -74,7 +75,7 @@ fun GameScreen(
     initial: GameState? = null,
 ) {
     val st = remember(level.id, difficulty) {
-        initial ?: GameState(level, difficulty).also {
+        (initial ?: GameState(level, difficulty).also {
             // Teorię pokazujemy tylko przy pierwszym podejściu – potem jest pod przyciskiem 📘.
             it.layout = save.layouts[level.id].orEmpty().mapValues { (_, p) -> androidx.compose.ui.geometry.Offset(p.x, p.y) }
             it.phase = when {
@@ -82,7 +83,7 @@ fun GameScreen(
                 level.safetyProcedure -> Phase.SAFETY
                 else -> Phase.BUILD
             }
-        }
+        }).also { it.onSound = vm::play }
     }
     val quickSafety = save.stats.perfectProcedures >= QUICK_SAFETY_AFTER
     when (st.phase) {
@@ -135,12 +136,14 @@ private fun BuildScreen(
                 val attempt = Attempt(st.failedChecks, r.warnings.size, st.procedureMistakes, st.hintsUsed, st.seconds)
                 st.rewardWarnings = r.warnings
                 st.reward = vm.completeLevel(level, st.difficulty, attempt)
+                vm.play(Sound.SUCCESS)
                 st.showResult = true
                 st.report = null
                 st.ghost = null
                 st.enterTest(time)
             } else {
                 st.failedChecks++
+                vm.play(Sound.ERROR)
                 st.report = r
                 st.showReport = true
                 st.focusIssue = null
@@ -189,6 +192,8 @@ private fun BuildScreen(
                     Text("${level.id} • ${level.title}", color = Palette.Text, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
                     Text("${st.difficulty.title} • sprawdzenia z błędami: ${st.failedChecks}", color = Palette.TextDim, fontSize = 11.sp)
                 }
+                GameButton(if (save.sound) "🔊" else "🔇", { vm.setSound(!save.sound) }, small = true, color = Palette.SurfaceHi, textColor = Palette.Text)
+                Spacer(Modifier.width(6.dp))
                 GameButton("📘", { st.showTheory = true }, small = true, color = Palette.SurfaceHi, textColor = Palette.Text)
                 Spacer(Modifier.width(6.dp))
                 Pill("🔧 Montaż", st.mode == Mode.BUILD, { st.mode = Mode.BUILD; st.sparks = emptyList() })

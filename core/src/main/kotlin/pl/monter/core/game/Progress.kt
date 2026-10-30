@@ -46,6 +46,7 @@ data class SaveData(
     /** Postępy przygotowań do egzaminu SEP. */
     val sep: pl.monter.core.exam.SepProgress = pl.monter.core.exam.SepProgress(),
     val haptics: Boolean = true,
+    val sound: Boolean = true,
     val updatedAt: Long = 0,
 ) {
     fun result(level: Level, d: Difficulty) = results[key(level.id, d)]

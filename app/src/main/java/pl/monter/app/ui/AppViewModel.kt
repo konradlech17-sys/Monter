@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import pl.monter.app.audio.Sfx
+import pl.monter.app.audio.Sound
 import pl.monter.app.data.LocalSaveStore
 import pl.monter.app.data.PlayGamesService
 import pl.monter.core.game.Achievement
@@ -46,6 +48,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** Krótkie komunikaty (np. nowe osiągnięcia) wyświetlane jako „toast" w grze. */
     private val _toasts = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val toasts: SharedFlow<String> = _toasts
+
+    private val sfx = Sfx(app)
 
     private var pgs: PlayGamesService? = null
     private var autoSignInTried = false
@@ -169,6 +173,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setHaptics(on: Boolean) = update(_save.value.copy(haptics = on))
 
+    fun setSound(on: Boolean) = update(_save.value.copy(sound = on))
+
+    fun play(sound: Sound) {
+        if (_save.value.sound) sfx.play(sound)
+    }
+
+    override fun onCleared() {
+        sfx.release()
+    }
+
     fun recordShort() {
         val s = _save.value
         val next = s.copy(stats = s.stats.copy(shortsCaused = s.stats.shortsCaused + 1))
@@ -195,6 +209,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val out = pl.monter.core.game.SepRewards.answer(_save.value, q, chosen, System.currentTimeMillis())
         update(out.save)
         announce(out.newAchievements)
+        play(if (chosen == q.correct) Sound.CORRECT else Sound.WRONG)
         return chosen == q.correct
     }
 

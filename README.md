@@ -108,4 +108,4 @@ Aplikacja targetuje API 36 (wymóg Google Play od sierpnia 2026).
 ## Pomysły na rozwój
 - kolejne poziomy: przekaźnik bistabilny, ściemniacz, sterowanie rolet, instalacja w łazience (strefy 0–2), pomiary (impedancja pętli zwarcia, rezystancja izolacji),
 - tryb „Znajdź usterkę" – gotowa instalacja z ukrytym błędem,
-- dźwięki (klik łącznika, bzyczenie przy zwarciu).
+- muzyka w tle (efekty dźwiękowe są – generuje je `tools/sfx_gen.py`).
