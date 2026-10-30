@@ -45,9 +45,9 @@ android {
 
     buildTypes {
         debug {
-            // Wersja testowa obok wersji ze sklepu – osobna ikona „Monter DEV" i osobny zapis.
+            // Wersja testowa obok wersji ze sklepu – osobna ikona „Spięcie! DEV" i osobny zapis.
             applicationIdSuffix = ".debug"
-            manifestPlaceholders["appLabel"] = "Monter DEV"
+            manifestPlaceholders["appLabel"] = "Spięcie! DEV"
         }
         release {
             signingConfig = signingConfigs.findByName("upload")

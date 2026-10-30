@@ -1,4 +1,4 @@
-# ⚡ Monter – gra o budowaniu instalacji elektrycznych
+# ⚡ Spięcie! – gra o budowaniu instalacji elektrycznych
 
 Gra na Androida, w której uczysz się montażu instalacji – od wymiany żarówki, przez łączniki schodowe
 i dzwonek, aż po pełną rozdzielnicę 3×400 V. Układasz przewody na planszy, a silnik gry **symuluje obwód**
@@ -66,7 +66,7 @@ Silnik jest oddzielony od Androida, dzięki czemu testy uruchomisz na dowolnym k
 ```
 
 GitHub Actions (`.github/workflows/android.yml`) buduje przy każdym pushu:
-- **monter-debug-apk** – wersja testowa „Monter DEV" (`pl.monter.elektryk.debug`), podpisana stałym kluczem
+- **monter-debug-apk** – wersja testowa „Spięcie! DEV" (`pl.monter.elektryk.debug`), podpisana stałym kluczem
   `app/debug.keystore`, więc każda nowa wersja instaluje się jako aktualizacja i **postępy zostają**,
 - **monter-play-aab** – paczka do Google Play, podpisana kluczem przesyłania z sekretów repozytorium.
 

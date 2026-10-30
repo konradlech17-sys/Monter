@@ -62,7 +62,7 @@ fun HomeScreen(
                     BoltLogo(Modifier.size(64.dp))
                     Spacer(Modifier.width(8.dp))
                     Column {
-                        Text("MONTER", color = Palette.Volt, fontSize = 44.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp)
+                        Text("SPIĘCIE!", color = Palette.Volt, fontSize = 44.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
                         Text("szkoła elektryka – od gniazdka do rozdzielnicy 400 V", color = Palette.TextDim, fontSize = 14.sp)
                     }
                 }
