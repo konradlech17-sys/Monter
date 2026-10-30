@@ -14,12 +14,43 @@ android {
         applicationId = "pl.monter.elektryk"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        // Numer przebiegu CI rośnie z każdym buildem – Google Play wymaga rosnącego versionCode,
+        // a Android nie zainstaluje aktualizacji ze starszym numerem.
+        val build = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+        versionCode = build
+        versionName = "1.0.$build"
+        manifestPlaceholders["appLabel"] = "@string/app_name"
+    }
+
+    signingConfigs {
+        // Stały klucz debug w repozytorium: każda kolejna wersja z CI instaluje się jako aktualizacja,
+        // więc postępy zostają. (Losowy klucz z każdego buildu wymuszał odinstalowanie = utratę zapisu).
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+        // Klucz przesyłania do Google Play – tylko z sekretów CI, nigdy w repozytorium.
+        val uploadStore = System.getenv("MONTER_KEYSTORE")
+        if (uploadStore != null && file(uploadStore).exists()) {
+            create("upload") {
+                storeFile = file(uploadStore)
+                storePassword = System.getenv("MONTER_KEYSTORE_PASSWORD")
+                keyAlias = "upload"
+                keyPassword = System.getenv("MONTER_KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
+        debug {
+            // Wersja testowa obok wersji ze sklepu – osobna ikona „Monter DEV" i osobny zapis.
+            applicationIdSuffix = ".debug"
+            manifestPlaceholders["appLabel"] = "Monter DEV"
+        }
         release {
+            signingConfig = signingConfigs.findByName("upload")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

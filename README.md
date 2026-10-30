@@ -65,8 +65,22 @@ Silnik jest oddzielony od Androida, dzięki czemu testy uruchomisz na dowolnym k
 ./gradlew :app:assembleDebug  # APK do zainstalowania na telefonie
 ```
 
-GitHub Actions (`.github/workflows/android.yml`) buduje APK przy każdym pushu – gotowy plik znajdziesz
-w zakładce **Actions → Android CI → Artifacts → monter-debug-apk**.
+GitHub Actions (`.github/workflows/android.yml`) buduje przy każdym pushu:
+- **monter-debug-apk** – wersja testowa „Monter DEV" (`pl.monter.elektryk.debug`), podpisana stałym kluczem
+  `app/debug.keystore`, więc każda nowa wersja instaluje się jako aktualizacja i **postępy zostają**,
+- **monter-play-aab** – paczka do Google Play, podpisana kluczem przesyłania z sekretów repozytorium.
+
+`versionCode` = numer przebiegu CI, więc każda paczka ma wyższy numer (wymóg Google Play).
+
+### Sekrety do podpisu wersji sklepowej
+W **Settings → Secrets and variables → Actions** dodaj:
+| Sekret | Zawartość |
+|---|---|
+| `MONTER_KEYSTORE_B64` | plik `.jks` zakodowany base64 (`base64 -w0 monter-upload.jks`) |
+| `MONTER_KEYSTORE_PASSWORD` | hasło magazynu i klucza (alias klucza: `upload`) |
+
+Klucza przesyłania **nie wrzucaj do repozytorium**. Przy włączonym „Podpisywaniu aplikacji przez Google Play"
+Google podpisuje aplikację własnym kluczem, a utracony klucz przesyłania można zresetować w Play Console.
 
 ## Konfiguracja Google Play (logowanie i zapis w chmurze)
 

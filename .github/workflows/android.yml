@@ -25,6 +25,24 @@ jobs:
       - name: Budowanie APK (debug)
         run: ./gradlew :app:assembleDebug --stacktrace
 
+      # Klucz przesyłania do Google Play z sekretów repozytorium (Settings → Secrets and variables → Actions).
+      # Bez sekretów paczka i tak się buduje (sprawdzamy R8), tylko jest niepodpisana.
+      - name: Klucz przesyłania (Google Play)
+        env:
+          KEYSTORE_B64: ${{ secrets.MONTER_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "MONTER_KEYSTORE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+          else
+            echo "::notice::Brak sekretu MONTER_KEYSTORE_B64 – paczka .aab będzie niepodpisana"
+          fi
+
+      - name: Paczka do Google Play (release .aab)
+        env:
+          MONTER_KEYSTORE_PASSWORD: ${{ secrets.MONTER_KEYSTORE_PASSWORD }}
+        run: ./gradlew :app:bundleRelease --stacktrace
+
       - name: Lint
         run: ./gradlew :app:lintDebug
         continue-on-error: true
@@ -33,6 +51,11 @@ jobs:
         with:
           name: monter-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: monter-play-aab
+          path: app/build/outputs/bundle/release/*.aab
 
       - uses: actions/upload-artifact@v4
         if: always()
