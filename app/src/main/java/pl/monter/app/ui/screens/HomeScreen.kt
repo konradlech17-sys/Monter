@@ -100,7 +100,7 @@ fun HomeScreen(
                 Stars(rank(save), size = 22.dp)
                 Text(rankName(save), color = Palette.TextDim, fontSize = 12.sp)
                 Spacer(Modifier.height(12.dp))
-                if (!cloud.signedIn) {
+                if (!cloud.signedIn && cloud.available) {
                     GameButton(if (cloud.busy) "Łączenie…" else "Zaloguj przez Google Play", onSignIn, enabled = !cloud.busy, small = true, color = Palette.Ok, textColor = Color.White)
                     Spacer(Modifier.height(6.dp))
                 }

@@ -22,6 +22,9 @@ class PlayGamesService(private val activity: Activity) {
 
     private val snapshotName = "monter-progress"
 
+    /** Czy w strings.xml jest prawdziwy identyfikator projektu usług gier (a nie „0"). */
+    val configured: Boolean = resString("game_services_project_id").let { it != null && it != "0" }
+
     suspend fun isAuthenticated(): Boolean = runCatching {
         PlayGames.getGamesSignInClient(activity).isAuthenticated().await().isAuthenticated()
     }.onFailure { Log.w(TAG, "isAuthenticated", it) }.getOrDefault(false)

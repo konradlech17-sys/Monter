@@ -30,6 +30,8 @@ data class CloudState(
     val playerName: String? = null,
     val status: String = "Łączenie z Google Play Gry…",
     val busy: Boolean = false,
+    /** false = usługi gier nie są jeszcze skonfigurowane w Play Console – gra działa tylko lokalnie. */
+    val available: Boolean = true,
 )
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
@@ -53,6 +55,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         pgs = service
         if (autoSignInTried) return
         autoSignInTried = true
+        if (!service.configured) {
+            _cloud.update { it.copy(available = false, status = "Zapis na telefonie. Zapis w chmurze pojawi się w kolejnej wersji gry.") }
+            return
+        }
         viewModelScope.launch {
             if (service.isAuthenticated()) onSignedIn(service)
             else _cloud.update { it.copy(status = "Gra offline – zaloguj się, aby zapisywać postępy w chmurze") }
@@ -65,10 +71,17 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun signIn() {
         val service = pgs ?: return
+        if (!service.configured) {
+            _toasts.tryEmit("Logowanie Google Play Gry nie jest jeszcze włączone w tej wersji")
+            return
+        }
         viewModelScope.launch {
             _cloud.update { it.copy(busy = true, status = "Logowanie…") }
             if (service.signIn()) onSignedIn(service)
-            else _cloud.update { it.copy(busy = false, status = "Nie udało się zalogować. Sprawdź konto Google Play Gry.") }
+            else {
+                _cloud.update { it.copy(busy = false, status = "Nie udało się zalogować. Sprawdź konto Google Play Gry.") }
+                _toasts.tryEmit("Nie udało się zalogować do Google Play Gry")
+            }
         }
     }
 
