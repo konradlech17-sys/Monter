@@ -41,3 +41,7 @@ Aplikacja edukacyjna, niezależna, niezwiązana ze Stowarzyszeniem Elektryków P
 
 ## Polityka prywatności
 https://konradlech17-sys.github.io/Monter/polityka-prywatnosci.html (GitHub Pages z folderu `docs/`)
+
+## Ilustracje AI
+Tło grafiki promocyjnej, tło ekranu głównego i ilustracje rozdziałów wygenerowano modelem Gemini (gemini-3.1-flash-image).
+Oryginały są w `zrodla-ai/`, a wersje do gry (WebP) w `app/src/main/res/drawable-nodpi/`. Napisy na grafikach są nakładane osobno.

@@ -1,5 +1,6 @@
 package pl.monter.app.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,10 +32,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pl.monter.app.R
 import pl.monter.app.ui.components.Header
 import pl.monter.app.ui.components.Pill
 import pl.monter.app.ui.components.SparkBadge
@@ -78,6 +82,7 @@ fun LevelMapScreen(
                     Text(ch.description, color = Palette.TextDim, fontSize = 12.sp)
                     Spacer(Modifier.height(8.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        item { ChapterArt(ch.number, done, levels.size, color) }
                         items(Levels.all.filter { it.chapter == ch.number }) { level ->
                             LevelCard(level, save, difficulty, color) {
                                 when {
@@ -114,6 +119,32 @@ fun LevelMapScreen(
     }
     info?.let {
         AlertDialog(onDismissRequest = { info = null }, confirmButton = { TextButton(onClick = { info = null }) { Text("OK") } }, text = { Text(it) })
+    }
+}
+
+private fun chapterArt(number: Int) = when (number) {
+    1 -> R.drawable.chapter_1
+    2 -> R.drawable.chapter_2
+    3 -> R.drawable.chapter_3
+    4 -> R.drawable.chapter_4
+    5 -> R.drawable.chapter_5
+    6 -> R.drawable.chapter_6
+    7 -> R.drawable.chapter_7
+    else -> R.drawable.chapter_8
+}
+
+/** Ilustracja rozdziału na początku rzędu poziomów, z paskiem postępu. */
+@Composable
+private fun ChapterArt(number: Int, done: Int, total: Int, color: Color) {
+    Box(Modifier.size(130.dp).clip(RoundedCornerShape(18.dp)).border(2.dp, color.copy(alpha = 0.7f), RoundedCornerShape(18.dp))) {
+        Image(painterResource(chapterArt(number)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        Box(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(26.dp)
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Palette.Bg.copy(alpha = 0.85f)))),
+        )
+        Box(Modifier.align(Alignment.BottomStart).padding(start = 8.dp, bottom = 6.dp).fillMaxWidth(0.85f).height(5.dp).clip(RoundedCornerShape(50)).background(Palette.Bg.copy(alpha = 0.7f))) {
+            Box(Modifier.fillMaxWidth(if (total == 0) 0f else done.toFloat() / total).height(5.dp).clip(RoundedCornerShape(50)).background(color))
+        }
     }
 }
 
