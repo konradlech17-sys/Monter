@@ -28,7 +28,7 @@ data class Mode(
     /** Jeśli ustawione, na mecie czeka „wróg" o sile = ułamek wartości optymalnej (tryb Armia). */
     val enemyFraction: Double? = null,
     /** Liczba par bramek na trasie. */
-    val gateCount: Int = 14,
+    val gateCount: Int = 24,
     /** Wskazówki (matematyczne i strategiczne) pokazywane na ekranie wyniku. */
     val tips: List<String>,
 ) {

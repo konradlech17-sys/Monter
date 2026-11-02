@@ -2,22 +2,26 @@ package pl.bramki.app.game
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import pl.bramki.engine.Item
 import pl.bramki.engine.Run
 import pl.bramki.engine.Side
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.sin
 
@@ -54,8 +58,10 @@ fun DrawScope.drawWorld(
     skyColor: Color,
     floaters: List<Floater>,
     nowMs: Long,
+    art: ModeArt,
+    fx: Fx,
 ) {
-    drawSky(cam, skyColor)
+    drawBackground(run, cam, art, skyColor)
     drawRoad(run, cam)
     drawFinish(run, cam)
     // Od najdalszych do najbliższych, żeby bliskie zasłaniały dalekie.
@@ -65,25 +71,20 @@ fun DrawScope.drawWorld(
             is Item.Wall -> drawWall(item, run, cam, textMeasurer)
         }
     }
-    drawPlayer(run, cam, textMeasurer, nowMs)
+    drawPlayer(run, cam, art, fx, nowMs)
     drawFloaters(floaters, run, cam, textMeasurer, nowMs)
 }
 
-private fun DrawScope.drawSky(cam: Camera, sky: Color) {
-    drawRect(
-        brush = Brush.verticalGradient(
-            colors = listOf(sky.lighten(0.25f), sky, sky.darken(0.35f)),
-            startY = 0f,
-            endY = cam.horizonY,
-        ),
-        size = Size(cam.width, cam.horizonY),
-    )
-    // Gwiazdy / pył – kilka stałych punktów, żeby niebo nie było płaskie.
-    for (i in 0 until 40) {
-        val x = ((i * 977) % 1000) / 1000f * cam.width
-        val y = ((i * 613) % 1000) / 1000f * cam.horizonY * 0.9f
-        drawCircle(Color.White.copy(alpha = 0.25f + (i % 3) * 0.15f), radius = 1.2f + (i % 2), center = Offset(x, y))
-    }
+/** Tło trybu (obraz z Gemini) z lekką paralaksą przy ruchu w bok, przyciemnione kolorem bieżącego szczebla. */
+private fun DrawScope.drawBackground(run: Run, cam: Camera, art: ModeArt, tint: Color) {
+    val img = art.background
+    val scale = max(cam.width * 1.12f / img.width, cam.horizonY / img.height)
+    val w = (img.width * scale).toInt()
+    val h = (img.height * scale).toInt()
+    val parallax = -run.x.toFloat() * cam.width * 0.05f
+    val x = ((cam.width - w) / 2f + parallax).toInt()
+    drawImage(img, dstOffset = IntOffset(x, (cam.horizonY - h).toInt()), dstSize = IntSize(w, h))
+    drawRect(tint.copy(alpha = 0.28f), size = Size(cam.width, cam.horizonY))
 }
 
 private fun DrawScope.drawRoad(run: Run, cam: Camera) {
@@ -185,14 +186,74 @@ private fun DrawScope.drawWall(wall: Item.Wall, run: Run, cam: Camera, tm: TextM
     }
 }
 
-private fun DrawScope.drawPlayer(run: Run, cam: Camera, tm: TextMeasurer, nowMs: Long) {
+private fun DrawScope.drawPlayer(run: Run, cam: Camera, art: ModeArt, fx: Fx, nowMs: Long) {
     val half = cam.roadHalf(1f)
     val px = cam.cx + run.x.toFloat() * half * 0.82f
-    val bob = (sin(nowMs / 140.0 * 2 * PI) * 3).toFloat()
-    val size = cam.width * 0.14f
-    // Cień
-    drawOval(Color.Black.copy(alpha = 0.35f), topLeft = Offset(px - size * 0.4f, cam.playerY - size * 0.12f), size = Size(size * 0.8f, size * 0.24f))
-    drawCentered(tm, run.tier.emoji, Offset(px, cam.playerY - size * 0.55f + bob), pxToSp(size * 0.62f), Color.White)
+    val size = cam.width * 0.26f
+
+    // Bieg: podskok i kołysanie w rytmie prędkości.
+    val phase = nowMs / 1000.0 * run.speed * 0.9
+    val bob = -(abs(sin(phase * PI)) * size * 0.05).toFloat()
+    val wobble = (sin(phase * 2 * PI) * 2.5).toFloat()
+    // Pochylenie w stronę ruchu (jak motocyklista w zakręcie).
+    val lean = (run.lateralVelocity * 7.0).coerceIn(-16.0, 16.0).toFloat()
+
+    // Squash & stretch: dobra bramka rozciąga w górę, zła spłaszcza.
+    var sx = 1f
+    var sy = 1f
+    val tg = (nowMs - fx.gateMs) / Fx.GATE_DURATION.toFloat()
+    if (tg in 0f..1f) {
+        val k = sin(tg * PI).toFloat()
+        if (fx.gatePositive) { sy += 0.22f * k; sx -= 0.14f * k } else { sy -= 0.22f * k; sx += 0.18f * k }
+    }
+    // Ściana: wstrząs na boki.
+    var shake = 0f
+    val tw = (nowMs - fx.wallMs) / Fx.WALL_DURATION.toFloat()
+    if (tw in 0f..1f) shake = (sin(tw * 28.0) * (1 - tw) * size * 0.08).toFloat()
+
+    // Przemiana: nowa postać „wyskakuje", stara znika, wokół rozchodzą się iskry.
+    val tt = (nowMs - fx.tierMs) / Fx.TIER_DURATION.toFloat()
+    val morphing = tt in 0f..1f
+    var pop = 1f
+    if (morphing) pop += (sin(tt * PI) * 0.35 * (1 - tt * 0.5)).toFloat()
+
+    // Cień – spłaszcza się razem z postacią.
+    val shadowW = size * 0.55f * sx * pop
+    drawOval(Color.Black.copy(alpha = 0.35f), topLeft = Offset(px + shake - shadowW / 2, cam.playerY - size * 0.05f), size = Size(shadowW, size * 0.11f))
+
+    fun drawSprite(img: ImageBitmap, scale: Float, alpha: Float) {
+        val w = size * scale
+        val h = w * img.height / img.width
+        withTransform({
+            translate(px + shake, cam.playerY + bob)
+            rotate(lean + wobble, pivot = Offset.Zero)
+            scale(sx, sy, pivot = Offset.Zero)
+        }) {
+            drawImage(
+                img,
+                dstOffset = IntOffset((-w / 2).toInt(), (-h).toInt()),
+                dstSize = IntSize(w.toInt(), h.toInt()),
+                alpha = alpha,
+            )
+        }
+    }
+
+    if (morphing && fx.tierUp) {
+        // Poświata i iskry.
+        val glow = (1 - tt)
+        drawCircle(Color(0xFFFFE08A).copy(alpha = 0.45f * glow), radius = size * (0.45f + 0.5f * tt), center = Offset(px, cam.playerY - size * 0.5f))
+        for (i in 0 until 14) {
+            val ang = i * 2 * PI / 14 + tt * 1.2
+            val r = size * (0.3f + 0.9f * tt)
+            val cx = px + (kotlin.math.cos(ang) * r).toFloat()
+            val cy = cam.playerY - size * 0.5f + (sin(ang) * r * 0.75).toFloat()
+            drawCircle(if (i % 2 == 0) Color(0xFFFFD166) else Color.White, radius = max(1.5f, size * 0.028f * glow), center = Offset(cx, cy), alpha = glow)
+        }
+        drawSprite(art.characters[fx.previousTier.coerceIn(0, art.characters.lastIndex)], (1 - tt) * 0.9f, 1 - tt)
+    } else if (morphing && !fx.tierUp) {
+        drawCircle(Color(0xFFE74C3C).copy(alpha = 0.35f * (1 - tt)), radius = size * 0.6f, center = Offset(px, cam.playerY - size * 0.5f))
+    }
+    drawSprite(art.characters[run.tierIndex], pop, 1f)
 }
 
 private fun DrawScope.drawFloaters(floaters: List<Floater>, run: Run, cam: Camera, tm: TextMeasurer, nowMs: Long) {

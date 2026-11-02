@@ -64,6 +64,9 @@ class Run(val track: Track) {
         private set
     var finished: Boolean = false
         private set
+    /** Prędkość boczna z ostatniego kroku (jednostki toru/s) – do animacji pochylenia postaci. */
+    var lateralVelocity: Double = 0.0
+        private set
     var result: RunResult? = null
         private set
 
@@ -93,7 +96,9 @@ class Run(val track: Track) {
         // Wygładzony ruch w bok (ograniczona prędkość boczna, żeby nie „teleportować").
         val maxDx = LATERAL_SPEED * dt
         val diff = targetX - x
+        val before = x
         x = if (abs(diff) <= maxDx) targetX else x + maxDx * (if (diff > 0) 1 else -1)
+        lateralVelocity = (x - before) / dt
 
         z += speed * dt
         speed = min(MAX_SPEED, speed + ACCEL * dt)
@@ -158,7 +163,7 @@ class Run(val track: Track) {
     companion object {
         const val BASE_SPEED = 9.0
         const val MAX_SPEED = 16.0
-        const val ACCEL = 0.18
+        const val ACCEL = 0.09
         const val LATERAL_SPEED = 4.5
     }
 }

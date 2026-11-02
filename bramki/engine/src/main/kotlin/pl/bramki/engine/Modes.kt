@@ -24,7 +24,7 @@ object Modes {
         tagline = "Z jaskini do gwiazd. Zbieraj lata postępu i zmieniaj epokę.",
         unit = "lat",
         start = 10.0,
-        gateCount = 14,
+        gateCount = 24,
         tiers = listOf(
             Tier("Epoka kamienia", "🪨", F[0], 0xFF3E2F23,
                 "Epoka kamienia to ponad 99% historii człowieka – trwała ok. 3 mln lat. Wszystko, co nazywamy „cywilizacją”, zmieściło się w ostatnim 1%."),
@@ -53,7 +53,7 @@ object Modes {
         tagline = "Od jednej komórki do człowieka. Zbieraj punkty DNA.",
         unit = "DNA",
         start = 10.0,
-        gateCount = 14,
+        gateCount = 24,
         tiers = listOf(
             Tier("Komórka", "🦠", F[0], 0xFF1E3A2F,
                 "Twoje mitochondria mają własne DNA, bo 2 mld lat temu były osobnymi bakteriami, które „zamieszkały” w innej komórce."),
@@ -82,7 +82,7 @@ object Modes {
         tagline = "Procenty kontra gotówka. Kiedy +50% jest lepsze niż +500 zł?",
         unit = "zł",
         start = 100.0,
-        gateCount = 14,
+        gateCount = 24,
         percentStyle = true,
         tiers = listOf(
             Tier("Pusta kieszeń", "🪙", F[0], 0xFF3A3A3A,
@@ -112,7 +112,7 @@ object Modes {
         tagline = "Zbieraj wojsko po drodze. Na mecie czeka bitwa.",
         unit = "wojów",
         start = 5.0,
-        gateCount = 14,
+        gateCount = 24,
         enemyFraction = 0.5,
         tiers = listOf(
             Tier("Samotny woj", "🧍", F[0], 0xFF3A3A2A,
@@ -142,7 +142,7 @@ object Modes {
         tagline = "Zbieraj masę. Z pyłku wyrośnij na gwiazdę, a potem w czarną dziurę.",
         unit = "t",
         start = 10.0,
-        gateCount = 14,
+        gateCount = 24,
         tiers = listOf(
             Tier("Pyłek", "✨", F[0], 0xFF1A1A2E,
                 "Każdego dnia na Ziemię spada ok. 100 ton kosmicznego pyłu. Trochę z niego ląduje na twoim parapecie."),

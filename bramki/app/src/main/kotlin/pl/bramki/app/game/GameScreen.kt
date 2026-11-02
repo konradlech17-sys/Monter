@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,6 +51,8 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -83,6 +87,9 @@ fun GameScreen(mode: Mode, seed: Long, onFinished: (RunResult) -> Unit, onQuit: 
     val floaters = remember { mutableStateListOf<Floater>() }
     val haptic = LocalHapticFeedback.current
     val textMeasurer = rememberTextMeasurer()
+    val context = LocalContext.current
+    val art = remember(mode) { ModeArt(context, mode) }
+    val fx = remember(run) { Fx() }
 
     // Pętla gry: jeden krok symulacji na klatkę ekranu.
     LaunchedEffect(run) {
@@ -105,16 +112,24 @@ fun GameScreen(mode: Mode, seed: Long, onFinished: (RunResult) -> Unit, onQuit: 
             for (e in run.drainEvents()) {
                 when (e) {
                     is GameEvent.GatePassed -> {
+                        fx.gateMs = nowMs
+                        fx.gatePositive = e.op.positive
                         floaters += Floater(e.op.label, if (e.op.positive) Good else Bad, nowMs, if (e.side == Side.LEFT) -1f else 1f)
                         haptic.performHapticFeedback(if (e.op.positive) HapticFeedbackType.TextHandleMove else HapticFeedbackType.LongPress)
                     }
                     is GameEvent.WallHit -> {
+                        fx.wallMs = nowMs
                         floaters += Floater("🧱 " + e.op.label, Bad, nowMs, 0f)
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
-                    is GameEvent.TierChanged -> if (e.to > e.from) {
-                        banner = mode.tiers[e.to]
-                        lastBanner = banner
+                    is GameEvent.TierChanged -> {
+                        fx.tierMs = nowMs
+                        fx.tierUp = e.to > e.from
+                        fx.previousTier = e.from
+                        if (e.to > e.from) {
+                            banner = mode.tiers[e.to]
+                            lastBanner = banner
+                        }
                     }
                     is GameEvent.Finished -> Unit
                 }
@@ -165,7 +180,7 @@ fun GameScreen(mode: Mode, seed: Long, onFinished: (RunResult) -> Unit, onQuit: 
         Canvas(Modifier.fillMaxSize()) {
             frame // odczyt stanu = przerysowanie co klatkę
             val cam = Camera(size.width, size.height)
-            drawWorld(run, cam, textMeasurer, skyColor, floaters, nowMs)
+            drawWorld(run, cam, textMeasurer, skyColor, floaters, nowMs, art, fx)
         }
 
         Hud(run, frame, onPause = { paused = true })
@@ -178,7 +193,7 @@ fun GameScreen(mode: Mode, seed: Long, onFinished: (RunResult) -> Unit, onQuit: 
             enter = fadeIn() + slideInVertically { -it / 2 },
             exit = fadeOut() + slideOutVertically { -it / 2 },
         ) {
-            (banner ?: lastBanner)?.let { TierBanner(it) }
+            (banner ?: lastBanner)?.let { TierBanner(mode, it) }
         }
 
         if (countdown > 0) {
@@ -232,7 +247,11 @@ private fun Hud(run: Run, frame: Long, onPause: () -> Unit) {
                     fontWeight = FontWeight.Black,
                     color = Color.White,
                 )
-                Text("${tier.emoji} ${tier.name}", fontSize = 16.sp, color = Accent, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(painterResource(Sprites.character(mode.id, run.tierIndex)), contentDescription = null, modifier = Modifier.size(26.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(tier.name, fontSize = 16.sp, color = Accent, fontWeight = FontWeight.Bold)
+            }
             }
             TextButton(onClick = onPause) { Text("⏸", fontSize = 24.sp, color = Color.White) }
         }
@@ -246,7 +265,7 @@ private fun Hud(run: Run, frame: Long, onPause: () -> Unit) {
         Text(
             if (next != null) {
                 val n = mode.tiers[mode.tierIndex(run.value, run.optimal) + 1]
-                "do ${n.emoji} ${n.name}: ${Format.compact(next)} ${mode.unit}"
+                "do: ${n.name} – ${Format.compact(next)} ${mode.unit}"
             } else "najwyższy szczebel!",
             fontSize = 12.sp,
             color = Color.White.copy(alpha = 0.8f),
@@ -263,14 +282,14 @@ private fun Hud(run: Run, frame: Long, onPause: () -> Unit) {
 }
 
 @Composable
-private fun TierBanner(tier: Tier) {
+private fun TierBanner(mode: Mode, tier: Tier) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(tier.color).copy(alpha = 0.92f)),
         shape = RoundedCornerShape(18.dp),
     ) {
         Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(tier.emoji, fontSize = 34.sp)
+                Image(painterResource(Sprites.character(mode.id, mode.tiers.indexOf(tier))), contentDescription = null, modifier = Modifier.size(56.dp))
                 Spacer(Modifier.width(10.dp))
                 Text(tier.name, fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color.White)
             }

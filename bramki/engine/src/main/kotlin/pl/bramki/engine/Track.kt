@@ -74,7 +74,7 @@ object TrackGenerator {
         }
         val pair: Pair<Op, Op> = when (kind) {
             Kind.EASY -> {
-                val good = if (rnd.nextDouble() < 0.6) add(rnd, v, 0.4, 1.2) else mul(mode, rnd)
+                val good = if (rnd.nextDouble() < 0.6) add(rnd, v, 0.3, 0.9) else mul(mode, rnd)
                 val bad = if (rnd.nextDouble() < 0.6) sub(rnd, v, 0.2, 0.6) else div(mode, rnd)
                 good to bad
             }
@@ -101,12 +101,12 @@ object TrackGenerator {
     private fun sub(rnd: Random, v: Double, lo: Double, hi: Double) = Op.Sub(max(1, nice(v * between(rnd, lo, hi))))
 
     private fun mul(mode: Mode, rnd: Random): Op {
-        val k = listOf(1.5, 2.0, 2.0, 3.0).random(rnd)
+        val k = listOf(1.5, 1.5, 2.0, 2.0, 3.0).random(rnd)
         return if (mode.percentStyle) Op.Pct(((k - 1) * 100).roundToLong().toInt()) else Op.Mul(k)
     }
 
     private fun div(mode: Mode, rnd: Random): Op {
-        val k = listOf(1.5, 2.0, 2.0, 3.0).random(rnd)
+        val k = listOf(1.5, 1.5, 2.0, 2.0, 3.0).random(rnd)
         return if (mode.percentStyle) Op.Pct(-((1 - 1 / k) * 100).roundToLong().toInt()) else Op.Div(k)
     }
 

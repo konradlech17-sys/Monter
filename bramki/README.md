@@ -19,6 +19,23 @@ skopiować do osobnego repozytorium 1:1 – dołączony jest też gotowy workflo
 
 Każdy szczebel ma swoją **ciekawostkę** (historia, biologia, finanse, fizyka), a ekran wyniku pokazuje
 **powtórkę decyzji**: „Bramka 7: miałeś 240, wybrałeś +100 (→ 340), lepsze było ×2 (→ 480)".
+Trasa to 24 pary bramek (ok. 1,5–2 min gry), tempo rośnie w miarę jazdy.
+
+## Grafika i animacje
+
+40 postaci (po jednej na szczebel) i 5 teł wygenerował **Gemini** (`tools/gen_art.py`, model
+`gemini-3.1-flash-image`). Postacie powstają na jednolicie zielonym tle, a skrypt kluczuje zieleń na
+przezroczystość **zalewaniem od brzegu obrazu**: kluczowane są tylko zielone piksele połączone z krawędzią
+(plus zamknięte „dziury" z czystą zielenią tła), więc zielona żaba czy jaszczurka zostają nietknięte.
+Surowe obrazy leżą w `art/raw/`, gotowe WebP w `app/src/main/res/drawable-nodpi/` (łącznie ~2,4 MB).
+
+Animacje są **proceduralne** (liczone z czasu, nie z klatek) – jeden sprite na szczebel wystarcza:
+- bieg: podskok i kołysanie w rytmie prędkości,
+- pochylenie w stronę ruchu (jak motocyklista w zakręcie), z prędkości bocznej z silnika,
+- **squash & stretch** przy bramce: dobra rozciąga postać w górę, zła spłaszcza,
+- wstrząs przy wjeździe w ścianę,
+- **przemiana** przy awansie: stara postać znika, nowa „wyskakuje" z poświatą i iskrami; przy spadku czerwony błysk,
+- tło trybu z lekką paralaksą przy ruchu w bok, przyciemniane kolorem bieżącego szczebla.
 
 ## Jak to działa (i czego uczy)
 
@@ -38,12 +55,12 @@ Każdy szczebel ma swoją **ciekawostkę** (historia, biologia, finanse, fizyka)
 
 ```
 engine/  – czysty Kotlin (bez Androida): operacje, generator tras, symulacja przebiegu, analiza + testy
-app/     – aplikacja Android (Jetpack Compose, pseudo-3D rysowane na Canvas – zero zewnętrznych grafik)
+app/     – aplikacja Android (Jetpack Compose, pseudo-3D rysowane na Canvas, sprite'y z Gemini)
+tools/   – generator grafik (Gemini) · art/raw/ – surowe obrazy
 ```
 
 Pseudo-3D to ten sam trik co w grach wyścigowych z lat 80.: punkt w odległości `dz` rzutujemy skalą
-`s = f / (f + dz)` – bez macierzy, bez OpenGL. Postać to emoji bieżącego szczebla, więc gra nie potrzebuje
-żadnych assetów.
+`s = f / (f + dz)` – bez macierzy, bez OpenGL.
 
 ## Budowanie
 
@@ -66,4 +83,4 @@ Przesuń palcem w lewo/prawo albo stuknij połowę ekranu. Bramka po Twojej stro
 ## Pomysły na rozwój
 - dźwięki i muzyka, tryb „wyścig z czasem", trasy dzienne (ten sam seed dla wszystkich),
 - kolejne warianty: temperatura (lód → plazma), pierwiastki (wodór → uran), język (gaworzenie → poezja),
-- kostiumy postaci zamiast emoji.
+- klatkowe animacje biegu (sprite sheet) zamiast proceduralnych.
