@@ -9,3 +9,4 @@ captures/
 *.jks
 *.keystore
 !app/debug.keystore
+__pycache__/
