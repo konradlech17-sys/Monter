@@ -1,0 +1,57 @@
+# Ten plik działa, gdy „bramki/" jest osobnym repozytorium (katalog główny = ten katalog).
+name: Bramki – Android CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Testy silnika gry
+        run: ./gradlew :engine:test --stacktrace
+
+      - name: APK testowe (debug)
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Klucz przesyłania (Google Play)
+        env:
+          KEYSTORE_B64: ${{ secrets.BRAMKI_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "BRAMKI_KEYSTORE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+          else
+            echo "::notice::Brak sekretu BRAMKI_KEYSTORE_B64 – paczka .aab będzie niepodpisana"
+          fi
+
+      - name: Paczka do Google Play (release .aab)
+        env:
+          BRAMKI_KEYSTORE_PASSWORD: ${{ secrets.BRAMKI_KEYSTORE_PASSWORD }}
+        run: ./gradlew :app:bundleRelease --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bramki-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bramki-play-aab
+          path: app/build/outputs/bundle/release/*.aab
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bramki-test-reports
+          path: engine/build/reports/tests

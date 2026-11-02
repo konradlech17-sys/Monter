@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dwie bramki (zielona i czerwona) i droga zbiegająca się do horyzontu. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- droga -->
+    <path
+        android:fillColor="#2E3358"
+        android:pathData="M30,90 L78,90 L62,38 L46,38 Z" />
+    <path
+        android:fillColor="#F2F2F2"
+        android:pathData="M53,90 L55,90 L54.6,38 L53.4,38 Z"
+        android:fillAlpha="0.35" />
+    <!-- lewa bramka: zielona -->
+    <path
+        android:fillColor="#2ECC71"
+        android:pathData="M31,44 L52,44 L52,66 L31,66 Z"
+        android:fillAlpha="0.9" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M39,52 L43,52 L43,48 L45,48 L45,52 L49,52 L49,54 L45,54 L45,58 L43,58 L43,54 L39,54 Z" />
+    <!-- prawa bramka: czerwona -->
+    <path
+        android:fillColor="#E74C3C"
+        android:pathData="M56,44 L77,44 L77,66 L56,66 Z"
+        android:fillAlpha="0.9" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M61,52 L71,52 L71,54 L61,54 Z" />
+    <!-- ludzik -->
+    <path
+        android:fillColor="#FFD166"
+        android:pathData="M54,70 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+    <path
+        android:fillColor="#FFD166"
+        android:pathData="M47,78 L61,78 L63,92 L45,92 Z" />
+</vector>
